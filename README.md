@@ -5,8 +5,15 @@ The Google Cast module extends Connect SDK to add Google Cast SDK support. This 
 For more information about Connect SDK, visit the [main repository](https://github.com/ConnectSDK/Connect-SDK-Android).
 
 ##Setup
+###Connect SDK Integration
+1. Go to the [Google Cast Developer site](https://developers.google.com/cast/docs/downloads) and download the Android Sender API
+2. Set it up following the instructions 
 
 ###Connect SDK Lite Integration
+1. Clone this repository into a subfolder of the Connect SDK Lite project
+2. Import the source files into the Connect SDK Lite Eclipse project
+3. Follow the steps above for Connect SDK integration
+4. In Connect SDK Lite's `DefaultPlatforms.java` file add line 'devicesList.put("com.connectsdk.androidgooglecast.CastService", "com.connectsdk.androidgooglecast.CastDiscoveryProvider");' inside 'getDeviceServiceMap()' method
 
 ##License
 Copyright (c) 2013-2014 LG Electronics.
