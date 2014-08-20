@@ -59,6 +59,7 @@ public class CastWebAppSession extends WebAppSession {
 			disconnectFromWebApp(launchSession);
 		}
 		
+
 		mCastServiceChannel = new CastServiceChannel(launchSession.getAppId(), this);
 		
 		ConnectionListener connectionListener = new ConnectionListener() {
