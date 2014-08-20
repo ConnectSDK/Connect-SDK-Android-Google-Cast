@@ -36,7 +36,7 @@ import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.command.URLServiceSubscription;
 import com.connectsdk.service.sessions.LaunchSession;
 import com.connectsdk.service.sessions.WebAppSession;
-import com.connectsdk_googlecast.CastService.ConnectionListener;
+import com.connectsdk.androidgooglecast.CastService.ConnectionListener;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.Cast.MessageReceivedCallback;
 import com.google.android.gms.cast.CastDevice;
@@ -59,7 +59,7 @@ public class CastWebAppSession extends WebAppSession {
 			disconnectFromWebApp(launchSession);
 		}
 		
-		mCastServiceChannel = new com.connectsdk_googlecast.CastServiceChannel(launchSession.getAppId(), this);
+		mCastServiceChannel = new com.connectsdk.androidgooglecast.CastServiceChannel(launchSession.getAppId(), this);
 		
 		ConnectionListener connectionListener = new ConnectionListener() {
 			
