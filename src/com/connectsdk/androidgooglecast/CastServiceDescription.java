@@ -1,4 +1,3 @@
-package com.connectsdk.androidgooglecast;
 /*
  * CastServiceDescription
  * Connect SDK
@@ -19,9 +18,8 @@ package com.connectsdk.androidgooglecast;
  * limitations under the License.
  */
 
+package com.connectsdk.service.config;
 
-
-import com.connectsdk.service.config.ServiceDescription;
 import com.google.android.gms.cast.CastDevice;
 
 public class CastServiceDescription extends ServiceDescription {

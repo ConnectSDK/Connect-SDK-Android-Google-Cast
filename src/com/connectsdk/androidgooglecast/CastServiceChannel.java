@@ -1,4 +1,3 @@
-package com.connectsdk.androidgooglecast;
 /*
  * CastServiceChannel
  * Connect SDK
@@ -19,12 +18,13 @@ package com.connectsdk.androidgooglecast;
  * limitations under the License.
  */
 
-
+package com.connectsdk.service;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.connectsdk.core.Util;
+import com.connectsdk.service.sessions.CastWebAppSession;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
 
