@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package com.connectsdk.service;
+package com.connectsdk.androidgooglecast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,6 +37,7 @@ import com.connectsdk.core.ImageInfo;
 import com.connectsdk.core.MediaInfo;
 import com.connectsdk.core.Util;
 import com.connectsdk.discovery.DiscoveryManager;
+import com.connectsdk.service.DeviceService;
 import com.connectsdk.service.capability.MediaControl;
 import com.connectsdk.service.capability.MediaPlayer;
 import com.connectsdk.service.capability.VolumeControl;
@@ -45,10 +46,8 @@ import com.connectsdk.service.capability.listeners.ResponseListener;
 import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.command.ServiceSubscription;
 import com.connectsdk.service.command.URLServiceSubscription;
-import com.connectsdk.service.config.CastServiceDescription;
 import com.connectsdk.service.config.ServiceConfig;
 import com.connectsdk.service.config.ServiceDescription;
-import com.connectsdk.service.sessions.CastWebAppSession;
 import com.connectsdk.service.sessions.LaunchSession;
 import com.connectsdk.service.sessions.LaunchSession.LaunchSessionType;
 import com.connectsdk.service.sessions.WebAppSession;
@@ -140,8 +139,8 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 			return;
 		
 		if (castDevice == null) {
-			if (serviceDescription instanceof CastServiceDescription)
-				this.castDevice = ((CastServiceDescription)serviceDescription).getCastDevice();
+			if (getServiceDescription() instanceof CastServiceDescription)
+				this.castDevice = ((CastServiceDescription)getServiceDescription()).getCastDevice();
 		}
 		
 		if (mApiClient == null) {

@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package com.connectsdk.discovery.provider;
+package com.connectsdk.androidgooglecast;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,8 +41,6 @@ import android.util.Log;
 import com.connectsdk.core.Util;
 import com.connectsdk.discovery.DiscoveryProvider;
 import com.connectsdk.discovery.DiscoveryProviderListener;
-import com.connectsdk.service.CastService;
-import com.connectsdk.service.config.CastServiceDescription;
 import com.connectsdk.service.config.ServiceDescription;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
