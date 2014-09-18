@@ -20,13 +20,13 @@
 
 package com.connectsdk.service.google_cast;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.connectsdk.service.sessions.CastWebAppSession;
 import com.connectsdk.core.Util;
+import com.connectsdk.service.sessions.CastWebAppSession;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class CastServiceChannel implements Cast.MessageReceivedCallback{
 	String webAppId;

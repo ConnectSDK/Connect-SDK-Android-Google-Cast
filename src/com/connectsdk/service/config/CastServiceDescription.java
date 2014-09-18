@@ -20,7 +20,6 @@
 
 package com.connectsdk.service.config;
 
-import com.connectsdk.service.config.ServiceDescription;
 import com.google.android.gms.cast.CastDevice;
 
 public class CastServiceDescription extends ServiceDescription {

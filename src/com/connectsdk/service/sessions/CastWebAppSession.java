@@ -20,10 +20,6 @@
 
 package com.connectsdk.service.sessions;
 
-import java.io.IOException;
-
-import org.json.JSONObject;
-
 import android.util.Log;
 
 import com.connectsdk.core.Util;
@@ -34,12 +30,14 @@ import com.connectsdk.service.capability.listeners.ResponseListener;
 import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.command.URLServiceSubscription;
 import com.connectsdk.service.google_cast.CastServiceChannel;
-import com.connectsdk.service.sessions.LaunchSession;
-import com.connectsdk.service.sessions.WebAppSession;
 import com.google.android.gms.cast.ApplicationMetadata;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+
+import org.json.JSONObject;
+
+import java.io.IOException;
 
 public class CastWebAppSession extends WebAppSession {
 	private CastService service;
