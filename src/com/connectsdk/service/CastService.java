@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package com.connectsdk.androidgooglecast;
+package com.connectsdk.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,11 +33,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.connectsdk.service.config.CastServiceDescription;
+import com.connectsdk.service.sessions.CastWebAppSession;
 import com.connectsdk.core.ImageInfo;
 import com.connectsdk.core.MediaInfo;
 import com.connectsdk.core.Util;
 import com.connectsdk.discovery.DiscoveryManager;
-import com.connectsdk.service.DeviceService;
 import com.connectsdk.service.capability.MediaControl;
 import com.connectsdk.service.capability.MediaPlayer;
 import com.connectsdk.service.capability.VolumeControl;
@@ -57,7 +58,6 @@ import com.google.android.gms.cast.Cast.ApplicationConnectionResult;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
 import com.google.android.gms.cast.MediaMetadata;
-import com.google.android.gms.cast.MediaStatus;
 import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.cast.RemoteMediaPlayer.MediaChannelResult;
 import com.google.android.gms.common.ConnectionResult;

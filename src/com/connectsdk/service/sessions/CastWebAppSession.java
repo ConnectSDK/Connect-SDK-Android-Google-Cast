@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package com.connectsdk.androidgooglecast;
+package com.connectsdk.service.sessions;
 
 import java.io.IOException;
 
@@ -27,11 +27,13 @@ import org.json.JSONObject;
 import android.util.Log;
 
 import com.connectsdk.core.Util;
+import com.connectsdk.service.CastService;
 import com.connectsdk.service.DeviceService;
 import com.connectsdk.service.capability.MediaPlayer;
 import com.connectsdk.service.capability.listeners.ResponseListener;
 import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.command.URLServiceSubscription;
+import com.connectsdk.service.google_cast.CastServiceChannel;
 import com.connectsdk.service.sessions.LaunchSession;
 import com.connectsdk.service.sessions.WebAppSession;
 import com.google.android.gms.cast.ApplicationMetadata;

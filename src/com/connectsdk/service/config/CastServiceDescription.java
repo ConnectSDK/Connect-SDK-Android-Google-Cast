@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package com.connectsdk.androidgooglecast;
+package com.connectsdk.service.config;
 
 import com.connectsdk.service.config.ServiceDescription;
 import com.google.android.gms.cast.CastDevice;

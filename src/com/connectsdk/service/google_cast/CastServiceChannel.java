@@ -18,11 +18,12 @@
  * limitations under the License.
  */
 
-package com.connectsdk.androidgooglecast;
+package com.connectsdk.service.google_cast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.connectsdk.service.sessions.CastWebAppSession;
 import com.connectsdk.core.Util;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
