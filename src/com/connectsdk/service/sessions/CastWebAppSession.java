@@ -53,7 +53,7 @@ public class CastWebAppSession extends WebAppSession {
 	@Override
 	public void connect(final ResponseListener<Object> listener) {
 		if (castServiceChannel != null) {
-			disconnectFromWebApp(launchSession);
+			disconnectFromWebApp();
 		}
 		
 		castServiceChannel = new CastServiceChannel(launchSession.getAppId(), this);
@@ -76,7 +76,7 @@ public class CastWebAppSession extends WebAppSession {
 		connect(connectionListener);
 	}
 	
-	public void disconnectFromWebApp(LaunchSession launchSession) {
+	public void disconnectFromWebApp() {
 		if (castServiceChannel == null) 
 			return;
 
@@ -86,6 +86,8 @@ public class CastWebAppSession extends WebAppSession {
 		} catch (IOException e) {
 	        Log.e("Connect SDK", "Exception while removing application", e);
 		}
+		
+		Cast.CastApi.leaveApplication(service.getApiClient());
 	}
 	
 	public void handleAppClose() {
