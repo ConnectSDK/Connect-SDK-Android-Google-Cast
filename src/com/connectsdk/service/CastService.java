@@ -32,6 +32,7 @@ import com.connectsdk.service.capability.MediaControl;
 import com.connectsdk.service.capability.MediaPlayer;
 import com.connectsdk.service.capability.VolumeControl;
 import com.connectsdk.service.capability.WebAppLauncher;
+import com.connectsdk.service.capability.MediaPlayer.MediaInfoListener;
 import com.connectsdk.service.capability.listeners.ResponseListener;
 import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.command.ServiceSubscription;
@@ -296,6 +297,23 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 	@Override
 	public CapabilityPriorityLevel getMediaPlayerCapabilityLevel() {
 		return CapabilityPriorityLevel.HIGH;
+	}
+	
+	@Override
+	public CapabilityPriorityLevel getMediaInfoCapabilityPriorityLevel() {
+		return CapabilityPriorityLevel.VERY_LOW;
+	}
+
+	@Override
+	public void getMediaInfo(MediaInfoListener listener) {
+		Util.postError(listener, ServiceCommandError.notSupported());	
+	}
+
+	@Override
+	public ServiceSubscription<MediaInfoListener> subscribeMediaInfo(
+			MediaInfoListener listener) {
+		listener.onError(ServiceCommandError.notSupported());
+		return null;
 	}
 	
 	private void attachMediaPlayer() {
