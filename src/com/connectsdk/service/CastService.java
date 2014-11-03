@@ -20,6 +20,15 @@
 
 package com.connectsdk.service;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,7 +41,6 @@ import com.connectsdk.service.capability.MediaControl;
 import com.connectsdk.service.capability.MediaPlayer;
 import com.connectsdk.service.capability.VolumeControl;
 import com.connectsdk.service.capability.WebAppLauncher;
-import com.connectsdk.service.capability.MediaPlayer.MediaInfoListener;
 import com.connectsdk.service.capability.listeners.ResponseListener;
 import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.command.ServiceSubscription;
@@ -57,15 +65,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.common.images.WebImage;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class CastService extends DeviceService implements MediaPlayer, MediaControl, VolumeControl, WebAppLauncher {
 	public interface LaunchWebAppListener{
@@ -301,19 +300,42 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 	
 	@Override
 	public CapabilityPriorityLevel getMediaInfoCapabilityPriorityLevel() {
-		return CapabilityPriorityLevel.VERY_LOW;
+		return CapabilityPriorityLevel.NORMAL;
 	}
 
 	@Override
 	public void getMediaInfo(MediaInfoListener listener) {
-		Util.postError(listener, ServiceCommandError.notSupported());	
+		
+		if (mMediaPlayer.getMediaInfo() != null) {
+		
+//		Log.d("MediaInfo", mMediaPlayer.getMediaInfo().dZ().toString());
+		
+		String url = mMediaPlayer.getMediaInfo().getContentId();
+		String mimeType = mMediaPlayer.getMediaInfo().getContentType();
+		String iconUrl = mMediaPlayer.getMediaInfo().getMetadata().getImages().get(0).getUrl().toString();
+		String title = null, description = null;
+		try {
+			title = mMediaPlayer.getMediaInfo().getMetadata().dZ().getString("title");
+			description =  mMediaPlayer.getMediaInfo().getMetadata().dZ().getString("subtitle");
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		ArrayList<ImageInfo> list = new ArrayList<ImageInfo>();
+		list.add(new ImageInfo(iconUrl));
+		MediaInfo info = new MediaInfo(url, mimeType, title, description, list);
+		
+		Util.postSuccess(listener, info);
+		}
 	}
 
 	@Override
 	public ServiceSubscription<MediaInfoListener> subscribeMediaInfo(
 			MediaInfoListener listener) {
-		listener.onError(ServiceCommandError.notSupported());
-		return null;
+		URLServiceSubscription<MediaInfoListener> request = new URLServiceSubscription<MediaInfoListener>(this, "info", null, null);
+		request.addListener(listener);
+		addSubscription(request);
+
+		return request;
 	}
 	
 	private void attachMediaPlayer() {
@@ -344,7 +366,16 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         mMediaPlayer.setOnMetadataUpdatedListener(new RemoteMediaPlayer.OnMetadataUpdatedListener() {
             @Override
             public void onMetadataUpdated() {
-                Log.d("Connect SDK", "MediaControlChannel.onMetadataUpdated");
+            	if (subscriptions.size() > 0) {
+                	for (URLServiceSubscription<?> subscription: subscriptions) {
+                		if (subscription.getTarget().equalsIgnoreCase("info")) {
+    						for (int i = 0; i < subscription.getListeners().size(); i++) {
+    							MediaInfoListener listener = (MediaInfoListener) subscription.getListeners().get(i);
+    							getMediaInfo(listener);
+    						}
+                		}
+                	}
+                }
             }
         });
         
@@ -730,6 +761,8 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 		capabilities.add(WebAppLauncher.Join);
 		capabilities.add(WebAppLauncher.Close);
 		
+		capabilities.add(MediaInfo);
+		
 		setCapabilities(capabilities);
 	}
 	
@@ -789,6 +822,9 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             	}
             }
 		}
+
+		
+		
     }
     
     private class ConnectionCallbacks implements GoogleApiClient.ConnectionCallbacks {
