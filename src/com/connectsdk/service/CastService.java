@@ -300,7 +300,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 	
 	@Override
 	public CapabilityPriorityLevel getMediaInfoCapabilityPriorityLevel() {
-		return CapabilityPriorityLevel.NORMAL;
+		return CapabilityPriorityLevel.HIGH;
 	}
 
 	@Override
