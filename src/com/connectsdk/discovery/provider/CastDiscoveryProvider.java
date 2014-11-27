@@ -50,10 +50,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class CastDiscoveryProvider implements DiscoveryProvider {
     private MediaRouter mMediaRouter;
     private MediaRouteSelector mMediaRouteSelector;
-    private MediaRouter.Callback mMediaRouterCallback;
+    protected MediaRouter.Callback mMediaRouterCallback;
 
-    private ConcurrentHashMap<String, ServiceDescription> foundServices;
-    private CopyOnWriteArrayList<DiscoveryProviderListener> serviceListeners;
+    protected ConcurrentHashMap<String, ServiceDescription> foundServices;
+    protected CopyOnWriteArrayList<DiscoveryProviderListener> serviceListeners;
     
 	private final static int RESCAN_INTERVAL = 10000;
 	private final static int RESCAN_ATTEMPTS = 3;
@@ -63,7 +63,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 	private Timer removeCallbackTimer;
 
 	public CastDiscoveryProvider(Context context) {
-        mMediaRouter = MediaRouter.getInstance(context);
+        mMediaRouter = createMediaRouter(context);
         mMediaRouteSelector = new MediaRouteSelector.Builder()
         	.addControlCategory(CastMediaControlIntent.categoryForCast(CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID))
         	.build();
@@ -72,6 +72,10 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         
         foundServices = new ConcurrentHashMap<String, ServiceDescription>(8, 0.75f, 2);
 		serviceListeners = new CopyOnWriteArrayList<DiscoveryProviderListener>();
+	}
+	
+	protected MediaRouter createMediaRouter(Context context) {
+		return MediaRouter.getInstance(context);
 	}
 	
 	@Override

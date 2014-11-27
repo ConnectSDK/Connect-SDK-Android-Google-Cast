@@ -153,17 +153,20 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 		}
 		
 		if (mApiClient == null) {
-        	Cast.CastOptions.Builder apiOptionsBuilder = Cast.CastOptions
-                      	.builder(castDevice, mCastClientListener);
-
-        	mApiClient = new GoogleApiClient.Builder(DiscoveryManager.getInstance().getContext())
-                              	.addApi(Cast.API, apiOptionsBuilder.build())
-                              	.addConnectionCallbacks(mConnectionCallbacks)
-                              	.addOnConnectionFailedListener(mConnectionFailedListener)
-                              	.build();
-        	
+        	mApiClient = createApiClient();        	
         	mApiClient.connect();
 		}
+	}
+
+	protected GoogleApiClient createApiClient() {
+		Cast.CastOptions.Builder apiOptionsBuilder = Cast.CastOptions
+              	.builder(castDevice, mCastClientListener);
+
+		return new GoogleApiClient.Builder(DiscoveryManager.getInstance().getContext())
+                      	.addApi(Cast.API, apiOptionsBuilder.build())
+                      	.addConnectionCallbacks(mConnectionCallbacks)
+                      	.addOnConnectionFailedListener(mConnectionFailedListener)
+                      	.build();
 	}
 
 	@Override
@@ -214,7 +217,6 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 			public void onConnected() {
 				try {
 					mMediaPlayer.play(mApiClient);
-					
 					Util.postSuccess(listener, null);
 				} catch (Exception e) {
 					Util.postError(listener, new ServiceCommandError(0, "Unable to play", null));
@@ -289,7 +291,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 			Util.postError(listener, new ServiceCommandError(0, "There is no media currently available", null));
 			return;
 		}
-		
+
 		ConnectionListener connectionListener = new ConnectionListener() {
 			
 			@Override
@@ -379,7 +381,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             return;
         }
 
-        mMediaPlayer = new RemoteMediaPlayer();
+        mMediaPlayer = createMediaPlayer();
         mMediaPlayer.setOnStatusUpdatedListener(new RemoteMediaPlayer.OnStatusUpdatedListener() {
 
             @Override
@@ -431,7 +433,11 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 		runCommand(connectionListener);
     }
 	
-    private void detachMediaPlayer() {
+    protected RemoteMediaPlayer createMediaPlayer() {
+		return new RemoteMediaPlayer();
+	}
+
+	private void detachMediaPlayer() {
         if (mMediaPlayer != null) {
         	ConnectionListener connectionListener = new ConnectionListener() {
     			
