@@ -417,20 +417,14 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             }
         });
         
-		ConnectionListener connectionListener = new ConnectionListener() {
-			
-			@Override
-			public void onConnected() {
-		        try {
-		            Cast.CastApi.setMessageReceivedCallbacks(mApiClient, mMediaPlayer.getNamespace(),
-		                    mMediaPlayer);
-		        } catch (IOException e) {
-		            Log.w("Connect SDK", "Exception while creating media channel", e);
-		        }
-			}
-		};
-		
-		runCommand(connectionListener);
+        if (mApiClient != null) {
+            try {
+                Cast.CastApi.setMessageReceivedCallbacks(mApiClient, mMediaPlayer.getNamespace(),
+                        mMediaPlayer);
+            } catch (IOException e) {
+                Log.w("Connect SDK", "Exception while creating media channel", e);
+            }
+        }
     }
 	
     protected RemoteMediaPlayer createMediaPlayer() {
@@ -438,23 +432,15 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 	}
 
 	private void detachMediaPlayer() {
-        if (mMediaPlayer != null) {
-        	ConnectionListener connectionListener = new ConnectionListener() {
-    			
-    			@Override
-    			public void onConnected() {
-    	            try {
-    	                Cast.CastApi.removeMessageReceivedCallbacks(mApiClient,
-    	                        mMediaPlayer.getNamespace());
-    	            } catch (IOException e) {
-    	                Log.w("Connect SDK", "Exception while launching application", e);
-    	            }
-    	            mMediaPlayer = null;
-    			}
-    		};
-    		
-    		runCommand(connectionListener);
+        if ((mMediaPlayer != null) && (mApiClient != null)) {
+            try {
+                Cast.CastApi.removeMessageReceivedCallbacks(mApiClient,
+                        mMediaPlayer.getNamespace());
+            } catch (IOException e) {
+                Log.w("Connect SDK", "Exception while launching application", e);
+            }
         }
+        mMediaPlayer = null;
     }
 	
     @Override
@@ -966,19 +952,25 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             Log.d("Connect SDK", "ConnectionCallbacks.onConnectionSuspended");
             
             mWaitingForReconnect = true;
+            detachMediaPlayer();
         }
 
         @Override
         public void onConnected(Bundle connectionHint) {
             Log.d("Connect SDK", "ConnectionCallbacks.onConnected, wasWaitingForReconnect: " + mWaitingForReconnect);
-            
+
+    		attachMediaPlayer();
+    		
             if (mWaitingForReconnect) {
         		mWaitingForReconnect = false;
-        		reconnectChannels();
-        	}
+
+        		if (Cast.CastApi.getApplicationStatus(mApiClient) != null && currentAppId != null) {
+        			CastWebAppSession webAppSession = sessions.get(currentAppId);
+
+        			webAppSession.connect(null);
+        		}
+            }
         	else {
-                attachMediaPlayer();
-                
         		connected = true;
 
         		reportConnected(true);
@@ -990,25 +982,6 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     				commandQueue.remove(listener);
     			}
     		}
-        }
-        
-        private void reconnectChannels() {
-    		if (mApiClient == null) {
-    			Log.d(TAG, "GoogleApiClient is null");
-    		}
-    		else if (mApiClient.isConnected() == false) {
-    			Log.d(TAG, "GoogleApiClient is not connected");
-    		}
-    		
-        	if (Cast.CastApi.getApplicationStatus(mApiClient) != null && currentAppId != null) {
-                CastWebAppSession webAppSession = sessions.get(currentAppId);
-
-                webAppSession.connect(null);
-        	}
-        	else {
-        		Log.d(TAG, "Application Status: " + Cast.CastApi.getApplicationStatus(mApiClient));
-        		Log.d(TAG, "Current App Id: " + currentAppId);
-        	}
         }
     }
 
