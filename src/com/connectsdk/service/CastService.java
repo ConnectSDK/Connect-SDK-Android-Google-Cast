@@ -988,11 +988,13 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     private class ConnectionFailedListener implements GoogleApiClient.OnConnectionFailedListener {
         @Override
         public void onConnectionFailed(final ConnectionResult result) {
-            Log.d("Connect SDK", "ConnectionFailedListener.onConnectionFailed");
+            Log.d("Connect SDK", "ConnectionFailedListener.onConnectionFailed " + (result != null ? result: ""));
             
             detachMediaPlayer();
 			connected = false;
 			mWaitingForReconnect = false;
+			mApiClient = null;
+			
 			
             Util.runOnUI(new Runnable() {
 				
