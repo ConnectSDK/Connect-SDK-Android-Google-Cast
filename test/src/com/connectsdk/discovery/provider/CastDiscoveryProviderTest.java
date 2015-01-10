@@ -125,10 +125,5 @@ public class CastDiscoveryProviderTest {
 		Assert.assertTrue(dp.serviceListeners.isEmpty());
 	}
 	
-	@Test
-	public void testFailureScenario(){
-		boolean b = false;
-		Assert.assertTrue(b);
-	}
-
+	
 }
