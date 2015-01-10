@@ -287,7 +287,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
     @Override
 	public void seek(final long position, final ResponseListener<Object> listener) {
-		if (mMediaPlayer.getMediaStatus() == null) {
+		if (mMediaPlayer == null || mMediaPlayer.getMediaStatus() == null) {
 			Util.postError(listener, new ServiceCommandError(0, "There is no media currently available", null));
 			return;
 		}
@@ -318,7 +318,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
 	@Override
 	public void getDuration(final DurationListener listener) {
-		if (mMediaPlayer.getMediaStatus() != null) {
+		if (mMediaPlayer != null && mMediaPlayer.getMediaStatus() != null) {
 			Util.postSuccess(listener, mMediaPlayer.getStreamDuration());
 		}
 		else {
@@ -328,7 +328,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 	
 	@Override
 	public void getPosition(final PositionListener listener) {
-		if (mMediaPlayer.getMediaStatus() != null) {
+		if (mMediaPlayer != null && mMediaPlayer.getMediaStatus() != null) {
 			Util.postSuccess(listener, mMediaPlayer.getApproximateStreamPosition());
 		}
 		else {
@@ -348,6 +348,9 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
 	@Override
 	public void getMediaInfo(MediaInfoListener listener) {
+		if (mMediaPlayer == null)
+			return;
+		
 		if (mMediaPlayer.getMediaInfo() != null) {
 			String url = mMediaPlayer.getMediaInfo().getContentId();
 			String mimeType = mMediaPlayer.getMediaInfo().getContentType();
