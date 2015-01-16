@@ -60,6 +60,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 	
 	private Timer addCallbackTimer;
 	private Timer removeCallbackTimer;
+	
+	boolean isRunning = false;
 
 	public CastDiscoveryProvider(Context context) {
         mMediaRouter = createMediaRouter(context);
@@ -79,7 +81,10 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 	
 	@Override
 	public void start() {
-		stop();
+		if (isRunning) 
+			return;
+		
+		isRunning = true;
 		
 		addCallbackTimer = new Timer();
 		addCallbackTimer.schedule(new TimerTask() {
@@ -137,23 +142,21 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 				foundServices.remove(key);
 		}
 		
-		new Handler(Looper.getMainLooper()).post(new Runnable() {
-			
-			@Override
-			public void run() {
-		        mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback, MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
-			}
-		});
+		rescan();
 	}
 
 	@Override
 	public void stop() {
+		isRunning = false;
+		
 		if (addCallbackTimer != null) {
 			addCallbackTimer.cancel();
+			addCallbackTimer = null;
 		}
 		
 		if (removeCallbackTimer != null) {
 			removeCallbackTimer.cancel();
+			removeCallbackTimer = null;
 		}
 		
 		if (mMediaRouter != null) {
@@ -166,11 +169,28 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 			});
 		}
 	}
+	
+	@Override
+	public void restart() {
+		stop();
+		start();
+	}
 
 	@Override
 	public void reset() {
 		stop();
 		foundServices.clear();
+	}
+	
+	@Override
+	public void rescan() {
+		new Handler(Looper.getMainLooper()).post(new Runnable() {
+			
+			@Override
+			public void run() {
+		        mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback, MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
+			}
+		});
 	}
 
 	@Override
@@ -188,6 +208,9 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
 	@Override
 	public void removeDeviceFilter(DiscoveryFilter filter) {}
+	
+	@Override
+	public void setFilters(java.util.List<DiscoveryFilter> filters) {};
 
 	@Override
 	public boolean isEmpty() {
