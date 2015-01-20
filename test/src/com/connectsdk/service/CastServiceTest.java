@@ -183,7 +183,7 @@ public class CastServiceTest {
 	
 
 	@Test
-	public void testNextdNotImplemented() {
+	public void testNextNotImplemented() {
 		// Test desc.: next should invoke error - "not supported"
 		
 		ResponseListener<Object> listener = mock(ResponseListener.class);

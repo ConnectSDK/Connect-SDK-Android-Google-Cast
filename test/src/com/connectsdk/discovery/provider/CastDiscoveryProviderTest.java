@@ -70,7 +70,6 @@ public class CastDiscoveryProviderTest {
 		Robolectric.runUiThreadTasksIncludingDelayedTasks();
 		
 		// then
-		verify(mediaRouter).removeCallback(any(MediaRouter.Callback.class));
 		verify(mediaRouter).addCallback(any(MediaRouteSelector.class), 
 				any(MediaRouter.Callback.class), eq(MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN));
 	}
