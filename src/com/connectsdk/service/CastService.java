@@ -53,7 +53,6 @@ import com.connectsdk.service.sessions.CastWebAppSession;
 import com.connectsdk.service.sessions.LaunchSession;
 import com.connectsdk.service.sessions.LaunchSession.LaunchSessionType;
 import com.connectsdk.service.sessions.WebAppSession;
-import com.connectsdk.service.sessions.WebAppSession.WebAppPinStatusListener;
 import com.google.android.gms.cast.ApplicationMetadata;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.Cast.ApplicationConnectionResult;
@@ -704,29 +703,6 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         };
 
         runCommand(connectionListener);
-    }
-
-    @Override
-    public void pinWebApp(LaunchSession launchSession,
-            ResponseListener<Object> listener) {
-        Util.postError(listener, ServiceCommandError.notSupported());
-    }
-
-    @Override
-    public void unPinWebApp(String webAppId, ResponseListener<Object> listener) {
-        Util.postError(listener, ServiceCommandError.notSupported());
-    }
-
-    @Override
-    public void isWebAppPinned(String webAppId, WebAppPinStatusListener listener) {
-        Util.postError(listener, ServiceCommandError.notSupported());
-    }
-
-    @Override
-    public ServiceSubscription<WebAppPinStatusListener> subscribeIsWebAppPinned(
-            String webAppId, WebAppPinStatusListener listener) {
-        Util.postError(listener, ServiceCommandError.notSupported());
-        return null;
     }
 
     @Override
