@@ -707,8 +707,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     }
 
     @Override
-    public void pinWebApp(LaunchSession launchSession,
-            ResponseListener<Object> listener) {
+    public void pinWebApp(String webAppId, ResponseListener<Object> listener) {
         Util.postError(listener, ServiceCommandError.notSupported());
     }
 
