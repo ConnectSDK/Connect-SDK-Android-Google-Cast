@@ -1,10 +1,10 @@
 /*
  * CastService
  * Connect SDK
- * 
+ *
  * Copyright (c) 2014 LG Electronics.
  * Created by Hyun Kook Khang on 23 Feb 2014
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -53,6 +53,7 @@ import com.connectsdk.service.sessions.CastWebAppSession;
 import com.connectsdk.service.sessions.LaunchSession;
 import com.connectsdk.service.sessions.LaunchSession.LaunchSessionType;
 import com.connectsdk.service.sessions.WebAppSession;
+import com.connectsdk.service.sessions.WebAppSession.WebAppPinStatusListener;
 import com.google.android.gms.cast.ApplicationMetadata;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.Cast.ApplicationConnectionResult;
@@ -154,10 +155,10 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 .builder(castDevice, mCastClientListener);
 
         return new GoogleApiClient.Builder(DiscoveryManager.getInstance().getContext())
-        .addApi(Cast.API, apiOptionsBuilder.build())
-        .addConnectionCallbacks(mConnectionCallbacks)
-        .addOnConnectionFailedListener(mConnectionFailedListener)
-        .build();
+                .addApi(Cast.API, apiOptionsBuilder.build())
+                .addConnectionCallbacks(mConnectionCallbacks)
+                .addOnConnectionFailedListener(mConnectionFailedListener)
+                .build();
     }
 
     @Override
@@ -439,7 +440,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
     @Override
     public void displayImage(String url, String mimeType, String title,
-            String description, String iconSrc, LaunchListener listener) {
+                             String description, String iconSrc, LaunchListener listener) {
         MediaMetadata mMediaMetadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_PHOTO);
         mMediaMetadata.putString(MediaMetadata.KEY_TITLE, title);
         mMediaMetadata.putString(MediaMetadata.KEY_SUBTITLE, description);
@@ -451,12 +452,12 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         }
 
         com.google.android.gms.cast.MediaInfo mediaInformation = new com.google.android.gms.cast.MediaInfo.Builder(url)
-        .setContentType(mimeType)
-        .setStreamType(com.google.android.gms.cast.MediaInfo.STREAM_TYPE_NONE)
-        .setMetadata(mMediaMetadata)
-        .setStreamDuration(0)
-        .setCustomData(null)
-        .build();
+                .setContentType(mimeType)
+                .setStreamType(com.google.android.gms.cast.MediaInfo.STREAM_TYPE_NONE)
+                .setMetadata(mMediaMetadata)
+                .setStreamDuration(0)
+                .setCustomData(null)
+                .build();
 
         playMedia(mediaInformation, CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID, listener);
     }
@@ -471,8 +472,8 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
     @Override
     public void playMedia(String url, String mimeType, String title,
-            String description, String iconSrc, boolean shouldLoop,
-            LaunchListener listener) {
+                          String description, String iconSrc, boolean shouldLoop,
+                          LaunchListener listener) {
         MediaMetadata mMediaMetadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
         mMediaMetadata.putString(MediaMetadata.KEY_TITLE, title);
         mMediaMetadata.putString(MediaMetadata.KEY_SUBTITLE, description);
@@ -484,12 +485,12 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         }
 
         com.google.android.gms.cast.MediaInfo mediaInformation = new com.google.android.gms.cast.MediaInfo.Builder(url)
-        .setContentType(mimeType)
-        .setStreamType(com.google.android.gms.cast.MediaInfo.STREAM_TYPE_BUFFERED)
-        .setMetadata(mMediaMetadata)
-        .setStreamDuration(1000)
-        .setCustomData(null)
-        .build();
+                .setContentType(mimeType)
+                .setStreamType(com.google.android.gms.cast.MediaInfo.STREAM_TYPE_BUFFERED)
+                .setMetadata(mMediaMetadata)
+                .setStreamDuration(1000)
+                .setCustomData(null)
+                .build();
 
         playMedia(mediaInformation, CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID, listener);
     }
@@ -616,7 +617,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                                 Util.postError(listener, error);
                             }
                         })
-                        );
+                );
             }
         };
 
@@ -703,6 +704,28 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         };
 
         runCommand(connectionListener);
+    }
+
+    @Override
+    public void pinWebApp(String webAppId, ResponseListener<Object> listener) {
+        Util.postError(listener, ServiceCommandError.notSupported());
+    }
+
+    @Override
+    public void unPinWebApp(String webAppId, ResponseListener<Object> listener) {
+        Util.postError(listener, ServiceCommandError.notSupported());
+    }
+
+    @Override
+    public void isWebAppPinned(String webAppId, WebAppPinStatusListener listener) {
+        Util.postError(listener, ServiceCommandError.notSupported());
+    }
+
+    @Override
+    public ServiceSubscription<WebAppPinStatusListener> subscribeIsWebAppPinned(
+            String webAppId, WebAppPinStatusListener listener) {
+        Util.postError(listener, ServiceCommandError.notSupported());
+        return null;
     }
 
     @Override
@@ -1005,7 +1028,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     }
 
     private class ApplicationConnectionResultCallback implements
-    ResultCallback<Cast.ApplicationConnectionResult> {
+            ResultCallback<Cast.ApplicationConnectionResult> {
         LaunchWebAppListener listener;
 
         public ApplicationConnectionResultCallback(LaunchWebAppListener listener) {
