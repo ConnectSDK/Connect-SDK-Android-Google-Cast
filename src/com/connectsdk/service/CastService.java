@@ -38,8 +38,16 @@ import com.connectsdk.core.MediaInfo;
 import com.connectsdk.core.Util;
 import com.connectsdk.discovery.DiscoveryFilter;
 import com.connectsdk.discovery.DiscoveryManager;
+import com.connectsdk.service.capability.CapabilityMethods;
+import com.connectsdk.service.capability.ExternalInputControl;
+import com.connectsdk.service.capability.KeyControl;
+import com.connectsdk.service.capability.Launcher;
 import com.connectsdk.service.capability.MediaControl;
 import com.connectsdk.service.capability.MediaPlayer;
+import com.connectsdk.service.capability.MouseControl;
+import com.connectsdk.service.capability.PowerControl;
+import com.connectsdk.service.capability.TVControl;
+import com.connectsdk.service.capability.TextInputControl;
 import com.connectsdk.service.capability.VolumeControl;
 import com.connectsdk.service.capability.WebAppLauncher;
 import com.connectsdk.service.capability.listeners.ResponseListener;
@@ -132,6 +140,23 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         return new DiscoveryFilter(ID, "Chromecast");
     }
 
+
+    @Override
+    public CapabilityPriorityLevel getPriorityLevel(Class<? extends CapabilityMethods> clazz) {
+        if (clazz.equals(MediaPlayer.class)) {
+            return getMediaPlayerCapabilityLevel();
+        }
+        if (clazz.equals(MediaControl.class)) {
+            return getMediaControlCapabilityLevel();
+        }
+        if (clazz.equals(VolumeControl.class)) {
+            return getVolumeControlCapabilityLevel();
+        }
+        if (clazz.equals(WebAppLauncher.class)) {
+            return getWebAppLauncherCapabilityLevel();
+        }
+        return CapabilityPriorityLevel.VERY_LOW;
+    }
 
     @Override
     public void connect() {
