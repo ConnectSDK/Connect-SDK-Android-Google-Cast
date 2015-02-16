@@ -1070,13 +1070,13 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
     @Override
     public void getPlayState(PlayStateListener listener) {
-        if (mMediaPlayer == null) {
-            Util.postError(listener, new ServiceCommandError(0, "Unable to get play state", null));
-            return;
+        if (mMediaPlayer != null && mMediaPlayer.getMediaStatus() != null) {
+            PlayStateStatus status = PlayStateStatus.convertPlayerStateToPlayStateStatus(mMediaPlayer.getMediaStatus().getPlayerState());
+            Util.postSuccess(listener, status);
         }
-
-        PlayStateStatus status = PlayStateStatus.convertPlayerStateToPlayStateStatus(mMediaPlayer.getMediaStatus().getPlayerState());
-        Util.postSuccess(listener, status);
+        else {
+            Util.postError(listener, new ServiceCommandError(0, "There is no media currently available", null));
+        }
     }
 
     public GoogleApiClient getApiClient() {
