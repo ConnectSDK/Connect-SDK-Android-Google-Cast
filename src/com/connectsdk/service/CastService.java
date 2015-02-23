@@ -106,6 +106,9 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     float currentVolumeLevel;
     boolean currentMuteStatus;
     boolean mWaitingForReconnect;
+    
+    // applicaiton ID for discovery (default: CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID)
+    static String applicationID = null;
 
     // Queue of commands that should be sent once register is complete
     CopyOnWriteArraySet<ConnectionListener> commandQueue = new CopyOnWriteArraySet<ConnectionListener>();
@@ -129,9 +132,15 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     }
 
     public static DiscoveryFilter discoveryFilter() {
-        return new DiscoveryFilter(ID, "Chromecast");
+        DiscoveryFilter filter = new DiscoveryFilter(ID, "Chromecast");
+        if (applicationID != null)
+            filter.setOption(applicationID);
+        return filter;
     }
 
+    public static void setApplicationID(String id) {
+        applicationID = id;
+    }
 
     @Override
     public void connect() {
