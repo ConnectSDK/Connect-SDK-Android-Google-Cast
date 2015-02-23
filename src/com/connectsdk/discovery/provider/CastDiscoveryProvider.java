@@ -64,7 +64,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
     boolean isRunning = false;
     
-    String applicationID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
+    String discoveryID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
     
     public CastDiscoveryProvider(Context context) {
         mMediaRouter = createMediaRouter(context);
@@ -83,20 +83,20 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         if (isRunning) 
             return;
 
-        if (applicationID == null) {
+        if (discoveryID == null) {
             Log.w("Connect SDK", "Application ID is null, recover Application ID to default");
-            applicationID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
+            discoveryID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
         }
 
         if (mMediaRouteSelector == null) {
             try {
                 mMediaRouteSelector = new MediaRouteSelector.Builder()
-                .addControlCategory(CastMediaControlIntent.categoryForCast(applicationID))
+                .addControlCategory(CastMediaControlIntent.categoryForCast(discoveryID))
                 .build();
             } catch (IllegalArgumentException e) {
-                Log.w("Connect SDK", "Invalid application ID: " + applicationID);
+                Log.w("Connect SDK", "Invalid application ID: " + discoveryID);
                 for (DiscoveryProviderListener listener : serviceListeners) {
-                    listener.onServiceDiscoveryFailed(this, new ServiceCommandError(0, "Invalid application ID: " + applicationID, null));
+                    listener.onServiceDiscoveryFailed(this, new ServiceCommandError(0, "Invalid application ID: " + discoveryID, null));
                 }
                 return;
             }
@@ -223,7 +223,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
     @Override
     public void addDeviceFilter(DiscoveryFilter filter) {
-        applicationID = (filter.getOption() != null)? (String)filter.getOption(): applicationID;
+        discoveryID = (filter.getOption() != null)? (String)filter.getOption(): discoveryID;
     }
 
     @Override
