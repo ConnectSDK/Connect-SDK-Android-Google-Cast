@@ -41,6 +41,7 @@ import com.connectsdk.discovery.DiscoveryFilter;
 import com.connectsdk.discovery.DiscoveryProvider;
 import com.connectsdk.discovery.DiscoveryProviderListener;
 import com.connectsdk.service.CastService;
+import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.config.CastServiceDescription;
 import com.connectsdk.service.config.ServiceDescription;
 import com.google.android.gms.cast.CastDevice;
@@ -61,14 +62,12 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
     private Timer addCallbackTimer;
     private Timer removeCallbackTimer;
 
+    String discoveryID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
+
     boolean isRunning = false;
 
     public CastDiscoveryProvider(Context context) {
         mMediaRouter = createMediaRouter(context);
-        mMediaRouteSelector = new MediaRouteSelector.Builder()
-        .addControlCategory(CastMediaControlIntent.categoryForCast(CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID))
-        .build();
-
         mMediaRouterCallback = new MediaRouterCallback();
 
         foundServices = new ConcurrentHashMap<String, ServiceDescription>(8, 0.75f, 2);
@@ -83,6 +82,25 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
     public void start() {
         if (isRunning) 
             return;
+
+        if (discoveryID == null) {
+            Log.w("Connect SDK", "Application ID is null, recover application ID to default");
+            discoveryID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
+        }
+
+        if (mMediaRouteSelector == null) {
+            try {
+                mMediaRouteSelector = new MediaRouteSelector.Builder()
+                .addControlCategory(CastMediaControlIntent.categoryForCast(discoveryID))
+                .build();
+            } catch (IllegalArgumentException e) {
+                Log.w("Connect SDK", "Invalid application ID: " + discoveryID);
+                for (DiscoveryProviderListener listener : serviceListeners) {
+                    listener.onServiceDiscoveryFailed(this, new ServiceCommandError(0, "Invalid application ID: " + discoveryID, null));
+                }
+                return;
+            }
+        }
 
         isRunning = true;
 
@@ -211,6 +229,11 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
     @Override
     public void setFilters(java.util.List<DiscoveryFilter> filters) {};
+
+    @Override
+    public void setProperty(Object property) {
+        discoveryID = (property != null) ? (String) property : discoveryID;
+    }
 
     @Override
     public boolean isEmpty() {
