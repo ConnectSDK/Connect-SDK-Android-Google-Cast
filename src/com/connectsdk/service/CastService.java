@@ -106,6 +106,8 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     float currentVolumeLevel;
     boolean currentMuteStatus;
     boolean mWaitingForReconnect;
+    
+    static String applicationID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
 
     // Queue of commands that should be sent once register is complete
     CopyOnWriteArraySet<ConnectionListener> commandQueue = new CopyOnWriteArraySet<ConnectionListener>();
@@ -132,6 +134,13 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         return new DiscoveryFilter(ID, "Chromecast");
     }
 
+    public static void setApplicationID(String id) {
+        applicationID = id;
+    }
+    
+    public static String getApplicationID() {
+        return applicationID;
+    }
 
     @Override
     public void connect() {
@@ -459,7 +468,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         .setCustomData(null)
         .build();
 
-        playMedia(mediaInformation, CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID, listener);
+        playMedia(mediaInformation, applicationID, listener);
     }
 
     @Override
@@ -492,7 +501,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         .setCustomData(null)
         .build();
 
-        playMedia(mediaInformation, CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID, listener);
+        playMedia(mediaInformation, applicationID, listener);
     }
 
     @Override
