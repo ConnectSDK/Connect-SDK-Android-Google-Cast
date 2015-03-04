@@ -62,6 +62,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
     private Timer addCallbackTimer;
     private Timer removeCallbackTimer;
 
+    String discoveryID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
+
     boolean isRunning = false;
 
     public CastDiscoveryProvider(Context context) {
@@ -80,6 +82,25 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
     public void start() {
         if (isRunning) 
             return;
+
+        if (discoveryID == null) {
+            Log.w("Connect SDK", "Application ID is null, recover application ID to default");
+            discoveryID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
+        }
+
+        if (mMediaRouteSelector == null) {
+            try {
+                mMediaRouteSelector = new MediaRouteSelector.Builder()
+                .addControlCategory(CastMediaControlIntent.categoryForCast(discoveryID))
+                .build();
+            } catch (IllegalArgumentException e) {
+                Log.w("Connect SDK", "Invalid application ID: " + discoveryID);
+                for (DiscoveryProviderListener listener : serviceListeners) {
+                    listener.onServiceDiscoveryFailed(this, new ServiceCommandError(0, "Invalid application ID: " + discoveryID, null));
+                }
+                return;
+            }
+        }
 
         isRunning = true;
 
@@ -222,6 +243,11 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
     @Override
     public void setFilters(java.util.List<DiscoveryFilter> filters) {};
+
+    @Override
+    public void setProperty(Object property) {
+        discoveryID = (property != null) ? (String) property : discoveryID;
+    }
 
     @Override
     public boolean isEmpty() {
