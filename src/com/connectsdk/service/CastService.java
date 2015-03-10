@@ -399,8 +399,10 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                             for (int i = 0; i < subscription.getListeners().size(); i++) {
                                 @SuppressWarnings("unchecked")
                                 ResponseListener<Object> listener = (ResponseListener<Object>) subscription.getListeners().get(i);
-                                PlayStateStatus status = PlayStateStatus.convertPlayerStateToPlayStateStatus(mMediaPlayer.getMediaStatus().getPlayerState());
-                                Util.postSuccess(listener, status);
+                                if (mMediaPlayer != null && mMediaPlayer.getMediaStatus() != null) {
+                                    PlayStateStatus status = PlayStateStatus.convertPlayerStateToPlayStateStatus(mMediaPlayer.getMediaStatus().getPlayerState());
+                                    Util.postSuccess(listener, status);
+                                }
                             }
                         }
                     }
