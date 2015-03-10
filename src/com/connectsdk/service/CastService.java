@@ -645,6 +645,53 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     public void launchWebApp(String webAppId, JSONObject params, boolean relaunchIfRunning, WebAppSession.LaunchListener listener) {
         Util.postError(listener, ServiceCommandError.notSupported());
     }
+    
+    public void requestStatus(final ResponseListener<Object> listener) {
+        if (mMediaPlayer != null) {
+            mMediaPlayer
+            .requestStatus(mApiClient)
+            .setResultCallback(
+                    new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
+
+                        @Override
+                        public void onResult(MediaChannelResult result) {
+                            if (result.getStatus().isSuccess()) {
+                                Util.postSuccess(listener, result);
+                            }
+                            else {
+                                Util.postError(listener, new ServiceCommandError(0, "Failed to request status", result));
+                            }
+                        }
+                    });
+        }
+        else {
+            Util.postError(listener, new ServiceCommandError(0, "There is no media currently available", null));
+        }
+    }
+
+    public void joinApplication(final ResponseListener<Object> listener) {
+        ConnectionListener connectionListener = new ConnectionListener() {
+
+            @Override
+            public void onConnected() {
+                Cast.CastApi.joinApplication(mApiClient).setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
+
+                    @Override
+                    public void onResult(ApplicationConnectionResult result) {
+                        if (result.getStatus().isSuccess()) {
+                            requestStatus(listener);
+                            Util.postSuccess(listener, result);
+                        }
+                        else {
+                            Util.postError(listener, new ServiceCommandError(0, "Failed to join application", result));
+                        }
+                    }
+                });
+            }
+        };
+
+        runCommand(connectionListener);
+    }
 
     @Override
     public void joinWebApp(final LaunchSession webAppLaunchSession, final WebAppSession.LaunchListener listener) {
@@ -656,6 +703,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
                     @Override
                     public void onSuccess(Object object) {
+                        requestStatus(null);
                         Util.postSuccess(listener, webAppSession);
                     }
 
@@ -989,6 +1037,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             Log.d("Connect SDK", "ConnectionCallbacks.onConnected, wasWaitingForReconnect: " + mWaitingForReconnect);
 
             attachMediaPlayer();
+            joinApplication(null);
 
             if (mWaitingForReconnect) {
                 mWaitingForReconnect = false;
