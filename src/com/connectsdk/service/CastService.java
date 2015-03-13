@@ -114,6 +114,8 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     float currentVolumeLevel;
     boolean currentMuteStatus;
     boolean mWaitingForReconnect;
+    
+    static String applicationID = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
 
     // Queue of commands that should be sent once register is complete
     CopyOnWriteArraySet<ConnectionListener> commandQueue = new CopyOnWriteArraySet<ConnectionListener>();
@@ -140,6 +142,13 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         return new DiscoveryFilter(ID, "Chromecast");
     }
 
+    public static void setApplicationID(String id) {
+        applicationID = id;
+    }
+    
+    public static String getApplicationID() {
+        return applicationID;
+    }
 
     @Override
     public CapabilityPriorityLevel getPriorityLevel(Class<? extends CapabilityMethods> clazz) {
@@ -484,7 +493,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 .setCustomData(null)
                 .build();
 
-        playMedia(mediaInformation, CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID, listener);
+        playMedia(mediaInformation, applicationID, listener);
     }
 
     @Override
@@ -517,7 +526,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 .setCustomData(null)
                 .build();
 
-        playMedia(mediaInformation, CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID, listener);
+        playMedia(mediaInformation, applicationID, listener);
     }
 
     @Override
@@ -1095,13 +1104,13 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
     @Override
     public void getPlayState(PlayStateListener listener) {
-        if (mMediaPlayer == null) {
-            Util.postError(listener, new ServiceCommandError(0, "Unable to get play state", null));
-            return;
+        if (mMediaPlayer != null && mMediaPlayer.getMediaStatus() != null) {
+            PlayStateStatus status = PlayStateStatus.convertPlayerStateToPlayStateStatus(mMediaPlayer.getMediaStatus().getPlayerState());
+            Util.postSuccess(listener, status);
         }
-
-        PlayStateStatus status = PlayStateStatus.convertPlayerStateToPlayStateStatus(mMediaPlayer.getMediaStatus().getPlayerState());
-        Util.postSuccess(listener, status);
+        else {
+            Util.postError(listener, new ServiceCommandError(0, "There is no media currently available", null));
+        }
     }
 
     public GoogleApiClient getApiClient() {

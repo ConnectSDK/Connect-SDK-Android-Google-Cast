@@ -41,6 +41,7 @@ import com.connectsdk.discovery.DiscoveryFilter;
 import com.connectsdk.discovery.DiscoveryProvider;
 import com.connectsdk.discovery.DiscoveryProviderListener;
 import com.connectsdk.service.CastService;
+import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.config.CastServiceDescription;
 import com.connectsdk.service.config.ServiceDescription;
 import com.google.android.gms.cast.CastDevice;
@@ -65,10 +66,6 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
     public CastDiscoveryProvider(Context context) {
         mMediaRouter = createMediaRouter(context);
-        mMediaRouteSelector = new MediaRouteSelector.Builder()
-        .addControlCategory(CastMediaControlIntent.categoryForCast(CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID))
-        .build();
-
         mMediaRouterCallback = new MediaRouterCallback();
 
         foundServices = new ConcurrentHashMap<String, ServiceDescription>(8, 0.75f, 2);
@@ -85,6 +82,20 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             return;
 
         isRunning = true;
+
+        if (mMediaRouteSelector == null) {
+            try {
+                mMediaRouteSelector = new MediaRouteSelector.Builder()
+                .addControlCategory(CastMediaControlIntent.categoryForCast(CastService.getApplicationID()))
+                .build();
+            } catch (IllegalArgumentException e) {
+                Log.w("Connect SDK", "Invalid application ID: " + CastService.getApplicationID());
+                for (DiscoveryProviderListener listener : serviceListeners) {
+                    listener.onServiceDiscoveryFailed(this, new ServiceCommandError(0, "Invalid application ID: " + CastService.getApplicationID(), null));
+                }
+                return;
+            }
+        }
 
         addCallbackTimer = new Timer();
         addCallbackTimer.schedule(new TimerTask() {
