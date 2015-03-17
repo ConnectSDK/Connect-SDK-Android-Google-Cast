@@ -1039,29 +1039,39 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             Log.d("Connect SDK", "ConnectionCallbacks.onConnected, wasWaitingForReconnect: " + mWaitingForReconnect);
 
             attachMediaPlayer();
-            joinApplication(null);
 
-            if (mWaitingForReconnect) {
-                mWaitingForReconnect = false;
+            Cast.CastApi.joinApplication(mApiClient).setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
 
-                if (Cast.CastApi.getApplicationStatus(mApiClient) != null && currentAppId != null) {
-                    CastWebAppSession webAppSession = sessions.get(currentAppId);
+                @Override
+                public void onResult(ApplicationConnectionResult result) {
+                    if (result.getStatus().isSuccess()) {
+                        requestStatus(null);
+                        
+                        if (mWaitingForReconnect) {
+                            mWaitingForReconnect = false;
 
-                    webAppSession.connect(null);
+                            if (Cast.CastApi.getApplicationStatus(mApiClient) != null && currentAppId != null) {
+                                CastWebAppSession webAppSession = sessions.get(currentAppId);
+
+                                webAppSession.connect(null);
+                            }
+                        }
+                        else {
+                            connected = true;
+
+                            reportConnected(true);
+                        }
+
+                        if (!commandQueue.isEmpty()) {
+                            for (ConnectionListener listener : commandQueue) {
+                                listener.onConnected();
+                                commandQueue.remove(listener);
+                            }
+                        }
+
+                    }
                 }
-            }
-            else {
-                connected = true;
-
-                reportConnected(true);
-            }
-
-            if (!commandQueue.isEmpty()) {
-                for (ConnectionListener listener : commandQueue) {
-                    listener.onConnected();
-                    commandQueue.remove(listener);
-                }
-            }
+            });
         }
     }
 
