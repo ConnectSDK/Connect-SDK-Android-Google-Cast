@@ -1046,29 +1046,28 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 public void onResult(ApplicationConnectionResult result) {
                     if (result.getStatus().isSuccess()) {
                         requestStatus(null);
-                        
-                        if (mWaitingForReconnect) {
-                            mWaitingForReconnect = false;
+                    }
 
-                            if (Cast.CastApi.getApplicationStatus(mApiClient) != null && currentAppId != null) {
-                                CastWebAppSession webAppSession = sessions.get(currentAppId);
+                    if (mWaitingForReconnect) {
+                        mWaitingForReconnect = false;
 
-                                webAppSession.connect(null);
-                            }
+                        if (Cast.CastApi.getApplicationStatus(mApiClient) != null && currentAppId != null) {
+                            CastWebAppSession webAppSession = sessions.get(currentAppId);
+
+                            webAppSession.connect(null);
                         }
-                        else {
-                            connected = true;
+                    }
+                    else {
+                        connected = true;
 
-                            reportConnected(true);
+                        reportConnected(true);
+                    }
+
+                    if (!commandQueue.isEmpty()) {
+                        for (ConnectionListener listener : commandQueue) {
+                            listener.onConnected();
+                            commandQueue.remove(listener);
                         }
-
-                        if (!commandQueue.isEmpty()) {
-                            for (ConnectionListener listener : commandQueue) {
-                                listener.onConnected();
-                                commandQueue.remove(listener);
-                            }
-                        }
-
                     }
                 }
             });
