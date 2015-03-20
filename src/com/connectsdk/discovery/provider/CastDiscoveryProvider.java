@@ -111,7 +111,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
             @Override
             public void run() {
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                Util.runOnUI(new Runnable() {
 
                     @Override
                     public void run() {
@@ -171,7 +171,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         }
 
         if (mMediaRouter != null) {
-            new Handler(Looper.getMainLooper()).post(new Runnable() {
+            Util.runOnUI(new Runnable() {
 
                 @Override
                 public void run() {
@@ -195,7 +195,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
     @Override
     public void rescan() {
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
+        Util.runOnUI(new Runnable() {
 
             @Override
             public void run() {
