@@ -443,7 +443,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             try {
                 Cast.CastApi.setMessageReceivedCallbacks(mApiClient, mMediaPlayer.getNamespace(),
                         mMediaPlayer);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Log.w("Connect SDK", "Exception while creating media channel", e);
             }
         }
