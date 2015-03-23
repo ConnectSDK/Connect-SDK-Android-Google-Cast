@@ -20,15 +20,6 @@
 
 package com.connectsdk.service;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArraySet;
-
-import org.json.JSONObject;
-
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -67,6 +58,15 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.common.images.WebImage;
+
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class CastService extends DeviceService implements MediaPlayer, MediaControl, VolumeControl, WebAppLauncher {
     interface ConnectionListener {
@@ -681,8 +681,24 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                     @Override
                     public void onResult(ApplicationConnectionResult result) {
                         if (result.getStatus().isSuccess()) {
-                            requestStatus(listener);
-                            Util.postSuccess(listener, result);
+                            // TODO: Maybe there is better way to check current cast device is showing backdrop, but for now, if chromecast is showing backdrop, then requestStatus would never response.
+                            if (result.getApplicationMetadata() != null &&
+                                result.getApplicationMetadata().getName() != null &&
+                                !result.getApplicationMetadata().getName().equals("Backdrop") &&
+                                mMediaPlayer != null) {
+
+                                mMediaPlayer.requestStatus(mApiClient).setResultCallback(
+                                    new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
+
+                                        @Override
+                                        public void onResult(MediaChannelResult result) {
+                                            Util.postSuccess(listener, result);
+                                        }
+                                });
+                            }
+                            else {
+                                Util.postSuccess(listener, result);
+                            }
                         }
                         else {
                             Util.postError(listener, new ServiceCommandError(0, "Failed to join application", result));
@@ -705,8 +721,18 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
                     @Override
                     public void onSuccess(Object object) {
-                        requestStatus(null);
-                        Util.postSuccess(listener, webAppSession);
+                        requestStatus(new ResponseListener<Object>() {
+                            @Override
+                            public void onSuccess(Object object) {
+                                Util.postSuccess(listener, webAppSession);
+                            }
+
+                            @Override
+                            public void onError(ServiceCommandError error) {
+                                // we sent success, because join is already succeeded.
+                                Util.postSuccess(listener, webAppSession);
+                            }
+                        });
                     }
 
                     @Override
@@ -1045,32 +1071,48 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 @Override
                 public void onResult(ApplicationConnectionResult result) {
                     if (result.getStatus().isSuccess()) {
-                        requestStatus(null);
-                    }
+                        // TODO: Maybe there is better way to check current cast device is showing backdrop, but for now, if chromecast is showing backdrop, then requestStatus would never response.
+                        if (result.getApplicationMetadata() != null &&
+                            result.getApplicationMetadata().getName() != null &&
+                            !result.getApplicationMetadata().getName().equals("Backdrop") &&
+                            mMediaPlayer != null) {
 
-                    if (mWaitingForReconnect) {
-                        mWaitingForReconnect = false;
+                            mMediaPlayer.requestStatus(mApiClient).setResultCallback(
+                                new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
 
-                        if (Cast.CastApi.getApplicationStatus(mApiClient) != null && currentAppId != null) {
-                            CastWebAppSession webAppSession = sessions.get(currentAppId);
-
-                            webAppSession.connect(null);
+                                    @Override
+                                    public void onResult(MediaChannelResult result) {
+                                        joinFinished();
+                                    }
+                            });
+                        }
+                        else {
+                            joinFinished();
                         }
                     }
                     else {
-                        connected = true;
-
-                        reportConnected(true);
-                    }
-
-                    if (!commandQueue.isEmpty()) {
-                        for (ConnectionListener listener : commandQueue) {
-                            listener.onConnected();
-                            commandQueue.remove(listener);
-                        }
+                        joinFinished();
                     }
                 }
             });
+        }
+
+        private void joinFinished() {
+            if (mWaitingForReconnect) {
+                mWaitingForReconnect = false;
+            }
+            else {
+                connected = true;
+
+                reportConnected(true);
+            }
+
+            if (!commandQueue.isEmpty()) {
+                for (ConnectionListener listener : commandQueue) {
+                    listener.onConnected();
+                    commandQueue.remove(listener);
+                }
+            }
         }
     }
 
