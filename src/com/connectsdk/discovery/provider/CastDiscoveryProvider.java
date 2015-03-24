@@ -55,10 +55,6 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
     protected ConcurrentHashMap<String, ServiceDescription> foundServices;
     protected CopyOnWriteArrayList<DiscoveryProviderListener> serviceListeners;
 
-    private final static int RESCAN_INTERVAL = 10000;
-    private final static int RESCAN_ATTEMPTS = 3;
-    private final static int SSDP_TIMEOUT = RESCAN_INTERVAL * RESCAN_ATTEMPTS;
-
     private Timer addCallbackTimer;
     private Timer removeCallbackTimer;
 
@@ -125,7 +121,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
     private void sendSearch() {
         List<String> killKeys = new ArrayList<String>();
 
-        long killPoint = new Date().getTime() - SSDP_TIMEOUT;
+        long killPoint = new Date().getTime() - TIMEOUT;
 
         for (String key : foundServices.keySet()) {
             ServiceDescription service = foundServices.get(key);
