@@ -617,27 +617,66 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     public void launchWebApp(final String webAppId, final boolean relaunchIfRunning, final WebAppSession.LaunchListener listener) {
         launchingAppId = webAppId;
 
+        final LaunchWebAppListener launchWebAppListener = new LaunchWebAppListener() {
+            @Override
+            public void onSuccess(WebAppSession webAppSession) {
+                Util.postSuccess(listener, webAppSession);
+            }
+
+            @Override
+            public void onFailure(ServiceCommandError error) {
+                Util.postError(listener, error);
+            }
+        };
+
         ConnectionListener connectionListener = new ConnectionListener() {
 
             @Override
             public void onConnected() {
-                LaunchOptions options = new LaunchOptions();
-                options.setRelaunchIfRunning(relaunchIfRunning);
-
-                Cast.CastApi.launchApplication(mApiClient, webAppId, options).setResultCallback(
-                    new ApplicationConnectionResultCallback(new LaunchWebAppListener() {
+                // TODO Workaround, for some reason, if relaunchIfRunning is false, launchApplication returns 2005 error and cannot launch.
+                if (relaunchIfRunning == false) {
+                    Cast.CastApi.joinApplication(mApiClient).setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
 
                         @Override
-                        public void onSuccess(WebAppSession webAppSession) {
-                            Util.postSuccess(listener, webAppSession);
-                        }
+                        public void onResult(ApplicationConnectionResult result) {
+                            if (result.getStatus().isSuccess() &&
+                                    result.getApplicationMetadata() != null &&
+                                    result.getApplicationMetadata().getName() != null &&
+                                    result.getApplicationMetadata().getApplicationId().equals(webAppId)) {
+                                ApplicationMetadata applicationMetadata = result.getApplicationMetadata();
+                                currentAppId = applicationMetadata.getApplicationId();
 
-                        @Override
-                        public void onFailure(ServiceCommandError error) {
-                            Util.postError(listener, error);
+                                LaunchSession launchSession = LaunchSession.launchSessionForAppId(applicationMetadata.getApplicationId());
+                                launchSession.setAppName(applicationMetadata.getName());
+                                launchSession.setSessionId(result.getSessionId());
+                                launchSession.setSessionType(LaunchSessionType.WebApp);
+                                launchSession.setService(CastService.this);
+
+                                CastWebAppSession webAppSession = new CastWebAppSession(launchSession, CastService.this);
+                                webAppSession.setMetadata(applicationMetadata);
+
+                                sessions.put(applicationMetadata.getApplicationId(), webAppSession);
+
+                                Util.postSuccess(listener, webAppSession);
+                            }
+                            else {
+                                LaunchOptions options = new LaunchOptions();
+                                options.setRelaunchIfRunning(true);
+
+                                Cast.CastApi.launchApplication(mApiClient, webAppId, options).setResultCallback(
+                                        new ApplicationConnectionResultCallback(launchWebAppListener));
+                            }
                         }
-                    })
-                );
+                    });
+                }
+                else {
+                    LaunchOptions options = new LaunchOptions();
+                    options.setRelaunchIfRunning(relaunchIfRunning);
+
+                    Cast.CastApi.launchApplication(mApiClient, webAppId, options).setResultCallback(
+                            new ApplicationConnectionResultCallback(launchWebAppListener)
+                    );
+                }
             }
         };
 
