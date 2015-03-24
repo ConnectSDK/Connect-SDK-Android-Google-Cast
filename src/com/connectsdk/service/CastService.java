@@ -50,6 +50,7 @@ import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.Cast.ApplicationConnectionResult;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
+import com.google.android.gms.cast.LaunchOptions;
 import com.google.android.gms.cast.MediaMetadata;
 import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.cast.RemoteMediaPlayer.MediaChannelResult;
@@ -565,7 +566,9 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 if (Cast.CastApi.getApplicationStatus(mApiClient) == null || (!mediaAppId.equals(currentAppId)))
                     relaunchIfRunning = true;
 
-                Cast.CastApi.launchApplication(mApiClient, mediaAppId, relaunchIfRunning).setResultCallback(webAppLaunchCallback);
+                LaunchOptions options = new LaunchOptions();
+                options.setRelaunchIfRunning(relaunchIfRunning);
+                Cast.CastApi.launchApplication(mApiClient, mediaAppId, options).setResultCallback(webAppLaunchCallback);
             }
         };
 
@@ -618,20 +621,23 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
             @Override
             public void onConnected() {
-                Cast.CastApi.launchApplication(mApiClient, webAppId, relaunchIfRunning).setResultCallback(
-                        new ApplicationConnectionResultCallback(new LaunchWebAppListener() {
+                LaunchOptions options = new LaunchOptions();
+                options.setRelaunchIfRunning(relaunchIfRunning);
 
-                            @Override
-                            public void onSuccess(WebAppSession webAppSession) {
-                                Util.postSuccess(listener, webAppSession);
-                            }
+                Cast.CastApi.launchApplication(mApiClient, webAppId, options).setResultCallback(
+                    new ApplicationConnectionResultCallback(new LaunchWebAppListener() {
 
-                            @Override
-                            public void onFailure(ServiceCommandError error) {
-                                Util.postError(listener, error);
-                            }
-                        })
-                        );
+                        @Override
+                        public void onSuccess(WebAppSession webAppSession) {
+                            Util.postSuccess(listener, webAppSession);
+                        }
+
+                        @Override
+                        public void onFailure(ServiceCommandError error) {
+                            Util.postError(listener, error);
+                        }
+                    })
+                );
             }
         };
 
