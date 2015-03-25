@@ -29,8 +29,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.v7.media.MediaRouteSelector;
 import android.support.v7.media.MediaRouter;
 import android.support.v7.media.MediaRouter.RouteInfo;
@@ -221,7 +219,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
     public void removeDeviceFilter(DiscoveryFilter filter) {}
 
     @Override
-    public void setFilters(java.util.List<DiscoveryFilter> filters) {};
+    public void setFilters(java.util.List<DiscoveryFilter> filters) {}
 
     @Override
     public boolean isEmpty() {
@@ -262,8 +260,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
                 ((CastServiceDescription)foundService).setCastDevice(castDevice);
             }
 
-            if (foundService != null)
-                foundService.setLastDetection(new Date().getTime());
+            foundService.setLastDetection(new Date().getTime());
 
             foundServices.put(uuid, foundService);
 
