@@ -22,6 +22,7 @@ package com.connectsdk.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,12 +73,12 @@ import com.google.android.gms.common.images.WebImage;
 public class CastService extends DeviceService implements MediaPlayer, MediaControl, VolumeControl, WebAppLauncher {
     interface ConnectionListener {
         void onConnected();
-    };
+    }
 
     public interface LaunchWebAppListener{
         void onSuccess(WebAppSession webAppSession);
         void onFailure(ServiceCommandError error);
-    };
+    }
 
     // @cond INTERNAL
 
@@ -891,8 +892,8 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     protected void updateCapabilities() {
         List<String> capabilities = new ArrayList<String>();
 
-        for (String capability : MediaPlayer.Capabilities) { capabilities.add(capability); }
-        for (String capability : VolumeControl.Capabilities) { capabilities.add(capability); }
+        Collections.addAll(capabilities, MediaPlayer.Capabilities);
+        Collections.addAll(capabilities, VolumeControl.Capabilities);
 
         capabilities.add(Play);
         capabilities.add(Pause);
