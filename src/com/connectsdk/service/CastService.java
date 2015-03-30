@@ -374,12 +374,21 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         if (mMediaPlayer.getMediaInfo() != null) {
             String url = mMediaPlayer.getMediaInfo().getContentId();
             String mimeType = mMediaPlayer.getMediaInfo().getContentType();
-            String iconUrl = mMediaPlayer.getMediaInfo().getMetadata().getImages().get(0).getUrl().toString();
-            String title = mMediaPlayer.getMediaInfo().getMetadata().getString(MediaMetadata.KEY_TITLE);
-            String description =  mMediaPlayer.getMediaInfo().getMetadata().getString(MediaMetadata.KEY_SUBTITLE);
 
-            ArrayList<ImageInfo> list = new ArrayList<ImageInfo>();
-            list.add(new ImageInfo(iconUrl));
+            MediaMetadata metadata = mMediaPlayer.getMediaInfo().getMetadata();
+            String title = null;
+            String description = null;
+            ArrayList<ImageInfo> list = null;
+
+            if (metadata != null) {
+                title = mMediaPlayer.getMediaInfo().getMetadata().getString(MediaMetadata.KEY_TITLE);
+                description =  mMediaPlayer.getMediaInfo().getMetadata().getString(MediaMetadata.KEY_SUBTITLE);
+
+                String iconUrl = mMediaPlayer.getMediaInfo().getMetadata().getImages().get(0).getUrl().toString();
+                list = new ArrayList<ImageInfo>();
+                list.add(new ImageInfo(iconUrl));
+            }
+
             MediaInfo info = new MediaInfo(url, mimeType, title, description, list);
 
             Util.postSuccess(listener, info);
