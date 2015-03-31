@@ -381,12 +381,14 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             ArrayList<ImageInfo> list = null;
 
             if (metadata != null) {
-                title = mMediaPlayer.getMediaInfo().getMetadata().getString(MediaMetadata.KEY_TITLE);
-                description =  mMediaPlayer.getMediaInfo().getMetadata().getString(MediaMetadata.KEY_SUBTITLE);
+                title = metadata.getString(MediaMetadata.KEY_TITLE);
+                description =  metadata.getString(MediaMetadata.KEY_SUBTITLE);
 
-                String iconUrl = mMediaPlayer.getMediaInfo().getMetadata().getImages().get(0).getUrl().toString();
-                list = new ArrayList<ImageInfo>();
-                list.add(new ImageInfo(iconUrl));
+                if (metadata.getImages() != null && metadata.getImages().size() > 0) {
+                    String iconUrl = metadata.getImages().get(0).getUrl().toString();
+                    list = new ArrayList<ImageInfo>();
+                    list.add(new ImageInfo(iconUrl));
+                }
             }
 
             MediaInfo info = new MediaInfo(url, mimeType, title, description, list);
@@ -501,10 +503,25 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
     @Override
     public void displayImage(MediaInfo mediaInfo, LaunchListener listener) {
-        ImageInfo imageInfo = mediaInfo.getImages().get(0);
-        String iconSrc = imageInfo.getUrl();
+        String mediaUrl = null;
+        String mimeType = null;
+        String title = null;
+        String desc = null;
+        String iconSrc = null;
 
-        displayImage(mediaInfo.getUrl(), mediaInfo.getMimeType(), mediaInfo.getTitle(), mediaInfo.getDescription(), iconSrc, listener);
+        if (mediaInfo != null) {
+            mediaUrl = mediaInfo.getUrl();
+            mimeType = mediaInfo.getMimeType();
+            title = mediaInfo.getTitle();
+            desc = mediaInfo.getDescription();
+
+            if (mediaInfo.getImages() != null && mediaInfo.getImages().size() > 0) {
+                ImageInfo imageInfo = mediaInfo.getImages().get(0);
+                iconSrc = imageInfo.getUrl();
+            }
+        }
+
+        displayImage(mediaUrl, mimeType, title, desc, iconSrc, listener);
     }
 
     @Override
@@ -534,10 +551,25 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
     @Override
     public void playMedia(MediaInfo mediaInfo, boolean shouldLoop, LaunchListener listener) {
-        ImageInfo imageInfo = mediaInfo.getImages().get(0);
-        String iconSrc = imageInfo.getUrl();
+        String mediaUrl = null;
+        String mimeType = null;
+        String title = null;
+        String desc = null;
+        String iconSrc = null;
 
-        playMedia(mediaInfo.getUrl(), mediaInfo.getMimeType(), mediaInfo.getTitle(), mediaInfo.getDescription(), iconSrc, shouldLoop, listener);
+        if (mediaInfo != null) {
+            mediaUrl = mediaInfo.getUrl();
+            mimeType = mediaInfo.getMimeType();
+            title = mediaInfo.getTitle();
+            desc = mediaInfo.getDescription();
+
+            if (mediaInfo.getImages() != null && mediaInfo.getImages().size() > 0) {
+                ImageInfo imageInfo = mediaInfo.getImages().get(0);
+                iconSrc = imageInfo.getUrl();
+            }
+        }
+
+        playMedia(mediaUrl, mimeType, title, desc, iconSrc, shouldLoop, listener);
     }
 
     private void playMedia(final com.google.android.gms.cast.MediaInfo mediaInformation, final String mediaAppId, final LaunchListener listener) {
