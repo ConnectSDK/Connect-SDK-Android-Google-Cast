@@ -6,7 +6,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.robolectric.Robolectric;
@@ -14,15 +13,12 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.support.v7.media.MediaRouteSelector;
 import android.support.v7.media.MediaRouter;
-import android.support.v7.media.MediaRouter.RouteInfo;
 
 import com.connectsdk.discovery.DiscoveryProviderListener;
 import com.connectsdk.discovery.provider.CastDiscoveryProvider;
 import com.connectsdk.service.config.ServiceDescription;
-import com.google.android.gms.cast.CastDevice;
 
 
 @RunWith(RobolectricTestRunner.class)
@@ -50,7 +46,7 @@ public class CastDiscoveryProviderTest {
 			return mediaRouter;
 		}
 
-	};
+	}
 
 	@Before
 	public void setUp() {
@@ -123,5 +119,6 @@ public class CastDiscoveryProviderTest {
 		dp.removeListener(listener);
 		Assert.assertTrue(dp.serviceListeners.isEmpty());
 	}
-
+	
+	
 }

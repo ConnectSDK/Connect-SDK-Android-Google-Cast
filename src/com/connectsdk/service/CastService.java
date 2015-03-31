@@ -1,10 +1,10 @@
 /*
  * CastService
  * Connect SDK
- * 
+ *
  * Copyright (c) 2014 LG Electronics.
  * Created by Hyun Kook Khang on 23 Feb 2014
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,6 +29,7 @@ import com.connectsdk.core.MediaInfo;
 import com.connectsdk.core.Util;
 import com.connectsdk.discovery.DiscoveryFilter;
 import com.connectsdk.discovery.DiscoveryManager;
+import com.connectsdk.service.capability.CapabilityMethods;
 import com.connectsdk.service.capability.MediaControl;
 import com.connectsdk.service.capability.MediaPlayer;
 import com.connectsdk.service.capability.VolumeControl;
@@ -64,6 +65,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,12 +74,12 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class CastService extends DeviceService implements MediaPlayer, MediaControl, VolumeControl, WebAppLauncher {
     interface ConnectionListener {
         void onConnected();
-    };
+    }
 
     public interface LaunchWebAppListener{
         void onSuccess(WebAppSession webAppSession);
         void onFailure(ServiceCommandError error);
-    };
+    }
 
     // @cond INTERNAL
 
@@ -144,6 +146,23 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     }
 
     @Override
+    public CapabilityPriorityLevel getPriorityLevel(Class<? extends CapabilityMethods> clazz) {
+        if (clazz.equals(MediaPlayer.class)) {
+            return getMediaPlayerCapabilityLevel();
+        }
+        else if (clazz.equals(MediaControl.class)) {
+            return getMediaControlCapabilityLevel();
+        }
+        else if (clazz.equals(VolumeControl.class)) {
+            return getVolumeControlCapabilityLevel();
+        }
+        else if (clazz.equals(WebAppLauncher.class)) {
+            return getWebAppLauncherCapabilityLevel();
+        }
+        return CapabilityPriorityLevel.NOT_SUPPORTED;
+    }
+
+    @Override
     public void connect() {
         if (connected && mApiClient != null &&
                 mApiClient.isConnecting() && mApiClient.isConnected())
@@ -165,10 +184,10 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 .builder(castDevice, mCastClientListener);
 
         return new GoogleApiClient.Builder(DiscoveryManager.getInstance().getContext())
-        .addApi(Cast.API, apiOptionsBuilder.build())
-        .addConnectionCallbacks(mConnectionCallbacks)
-        .addOnConnectionFailedListener(mConnectionFailedListener)
-        .build();
+                .addApi(Cast.API, apiOptionsBuilder.build())
+                .addConnectionCallbacks(mConnectionCallbacks)
+                .addOnConnectionFailedListener(mConnectionFailedListener)
+                .build();
     }
 
     @Override
@@ -356,15 +375,23 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         if (mMediaPlayer.getMediaInfo() != null) {
             String url = mMediaPlayer.getMediaInfo().getContentId();
             String mimeType = mMediaPlayer.getMediaInfo().getContentType();
-            String title = mMediaPlayer.getMediaInfo().getMetadata().getString(MediaMetadata.KEY_TITLE);
-            String description =  mMediaPlayer.getMediaInfo().getMetadata().getString(MediaMetadata.KEY_SUBTITLE);
-            String iconUrl = null;
-            if (!mMediaPlayer.getMediaInfo().getMetadata().getImages().isEmpty()) {
-                iconUrl = mMediaPlayer.getMediaInfo().getMetadata().getImages().get(0).getUrl().toString();
+
+            MediaMetadata metadata = mMediaPlayer.getMediaInfo().getMetadata();
+            String title = null;
+            String description = null;
+            ArrayList<ImageInfo> list = null;
+
+            if (metadata != null) {
+                title = metadata.getString(MediaMetadata.KEY_TITLE);
+                description =  metadata.getString(MediaMetadata.KEY_SUBTITLE);
+
+                if (metadata.getImages() != null && metadata.getImages().size() > 0) {
+                    String iconUrl = metadata.getImages().get(0).getUrl().toString();
+                    list = new ArrayList<ImageInfo>();
+                    list.add(new ImageInfo(iconUrl));
+                }
             }
 
-            ArrayList<ImageInfo> list = new ArrayList<ImageInfo>();
-            list.add(new ImageInfo(iconUrl));
             MediaInfo info = new MediaInfo(url, mimeType, title, description, list);
 
             Util.postSuccess(listener, info);
@@ -431,7 +458,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             try {
                 Cast.CastApi.setMessageReceivedCallbacks(mApiClient, mMediaPlayer.getNamespace(),
                         mMediaPlayer);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Log.w("Connect SDK", "Exception while creating media channel", e);
             }
         }
@@ -455,7 +482,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
     @Override
     public void displayImage(String url, String mimeType, String title,
-            String description, String iconSrc, LaunchListener listener) {
+                             String description, String iconSrc, LaunchListener listener) {
         MediaMetadata mMediaMetadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_PHOTO);
         mMediaMetadata.putString(MediaMetadata.KEY_TITLE, title);
         mMediaMetadata.putString(MediaMetadata.KEY_SUBTITLE, description);
@@ -467,28 +494,43 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         }
 
         com.google.android.gms.cast.MediaInfo mediaInformation = new com.google.android.gms.cast.MediaInfo.Builder(url)
-        .setContentType(mimeType)
-        .setStreamType(com.google.android.gms.cast.MediaInfo.STREAM_TYPE_NONE)
-        .setMetadata(mMediaMetadata)
-        .setStreamDuration(0)
-        .setCustomData(null)
-        .build();
+                .setContentType(mimeType)
+                .setStreamType(com.google.android.gms.cast.MediaInfo.STREAM_TYPE_NONE)
+                .setMetadata(mMediaMetadata)
+                .setStreamDuration(0)
+                .setCustomData(null)
+                .build();
 
         playMedia(mediaInformation, applicationID, listener);
     }
 
     @Override
     public void displayImage(MediaInfo mediaInfo, LaunchListener listener) {
-        ImageInfo imageInfo = mediaInfo.getImages().get(0);
-        String iconSrc = imageInfo.getUrl();
+        String mediaUrl = null;
+        String mimeType = null;
+        String title = null;
+        String desc = null;
+        String iconSrc = null;
 
-        displayImage(mediaInfo.getUrl(), mediaInfo.getMimeType(), mediaInfo.getTitle(), mediaInfo.getDescription(), iconSrc, listener);
+        if (mediaInfo != null) {
+            mediaUrl = mediaInfo.getUrl();
+            mimeType = mediaInfo.getMimeType();
+            title = mediaInfo.getTitle();
+            desc = mediaInfo.getDescription();
+
+            if (mediaInfo.getImages() != null && mediaInfo.getImages().size() > 0) {
+                ImageInfo imageInfo = mediaInfo.getImages().get(0);
+                iconSrc = imageInfo.getUrl();
+            }
+        }
+
+        displayImage(mediaUrl, mimeType, title, desc, iconSrc, listener);
     }
 
     @Override
     public void playMedia(String url, String mimeType, String title,
-            String description, String iconSrc, boolean shouldLoop,
-            LaunchListener listener) {
+                          String description, String iconSrc, boolean shouldLoop,
+                          LaunchListener listener) {
         MediaMetadata mMediaMetadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
         mMediaMetadata.putString(MediaMetadata.KEY_TITLE, title);
         mMediaMetadata.putString(MediaMetadata.KEY_SUBTITLE, description);
@@ -500,22 +542,37 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         }
 
         com.google.android.gms.cast.MediaInfo mediaInformation = new com.google.android.gms.cast.MediaInfo.Builder(url)
-        .setContentType(mimeType)
-        .setStreamType(com.google.android.gms.cast.MediaInfo.STREAM_TYPE_BUFFERED)
-        .setMetadata(mMediaMetadata)
-        .setStreamDuration(1000)
-        .setCustomData(null)
-        .build();
+                .setContentType(mimeType)
+                .setStreamType(com.google.android.gms.cast.MediaInfo.STREAM_TYPE_BUFFERED)
+                .setMetadata(mMediaMetadata)
+                .setStreamDuration(1000)
+                .setCustomData(null)
+                .build();
 
         playMedia(mediaInformation, applicationID, listener);
     }
 
     @Override
     public void playMedia(MediaInfo mediaInfo, boolean shouldLoop, LaunchListener listener) {
-        ImageInfo imageInfo = mediaInfo.getImages().get(0);
-        String iconSrc = imageInfo.getUrl();
+        String mediaUrl = null;
+        String mimeType = null;
+        String title = null;
+        String desc = null;
+        String iconSrc = null;
 
-        playMedia(mediaInfo.getUrl(), mediaInfo.getMimeType(), mediaInfo.getTitle(), mediaInfo.getDescription(), iconSrc, shouldLoop, listener);
+        if (mediaInfo != null) {
+            mediaUrl = mediaInfo.getUrl();
+            mimeType = mediaInfo.getMimeType();
+            title = mediaInfo.getTitle();
+            desc = mediaInfo.getDescription();
+
+            if (mediaInfo.getImages() != null && mediaInfo.getImages().size() > 0) {
+                ImageInfo imageInfo = mediaInfo.getImages().get(0);
+                iconSrc = imageInfo.getUrl();
+            }
+        }
+
+        playMedia(mediaUrl, mimeType, title, desc, iconSrc, shouldLoop, listener);
     }
 
     private void playMedia(final com.google.android.gms.cast.MediaInfo mediaInformation, final String mediaAppId, final LaunchListener listener) {
@@ -997,8 +1054,8 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     protected void updateCapabilities() {
         List<String> capabilities = new ArrayList<String>();
 
-        for (String capability : MediaPlayer.Capabilities) { capabilities.add(capability); }
-        for (String capability : VolumeControl.Capabilities) { capabilities.add(capability); }
+        Collections.addAll(capabilities, MediaPlayer.Capabilities);
+        Collections.addAll(capabilities, VolumeControl.Capabilities);
 
         capabilities.add(Play);
         capabilities.add(Pause);
@@ -1187,7 +1244,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     }
 
     private class ApplicationConnectionResultCallback implements
-    ResultCallback<Cast.ApplicationConnectionResult> {
+            ResultCallback<Cast.ApplicationConnectionResult> {
         LaunchWebAppListener listener;
 
         public ApplicationConnectionResultCallback(LaunchWebAppListener listener) {
