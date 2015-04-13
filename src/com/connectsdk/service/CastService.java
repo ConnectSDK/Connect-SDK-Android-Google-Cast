@@ -20,16 +20,6 @@
 
 package com.connectsdk.service;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArraySet;
-
-import org.json.JSONObject;
-
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -70,6 +60,16 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.common.images.WebImage;
+
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class CastService extends DeviceService implements MediaPlayer, MediaControl, VolumeControl, WebAppLauncher {
     interface ConnectionListener {
@@ -427,8 +427,10 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                             for (int i = 0; i < subscription.getListeners().size(); i++) {
                                 @SuppressWarnings("unchecked")
                                 ResponseListener<Object> listener = (ResponseListener<Object>) subscription.getListeners().get(i);
-                                PlayStateStatus status = PlayStateStatus.convertPlayerStateToPlayStateStatus(mMediaPlayer.getMediaStatus().getPlayerState());
-                                Util.postSuccess(listener, status);
+                                if (mMediaPlayer != null && mMediaPlayer.getMediaStatus() != null) {
+                                    PlayStateStatus status = PlayStateStatus.convertPlayerStateToPlayStateStatus(mMediaPlayer.getMediaStatus().getPlayerState());
+                                    Util.postSuccess(listener, status);
+                                }
                             }
                         }
                     }
@@ -621,9 +623,9 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 if (Cast.CastApi.getApplicationStatus(mApiClient) == null || (!mediaAppId.equals(currentAppId)))
                     relaunchIfRunning = true;
 
-                LaunchOptions option = new LaunchOptions();
-                option.setRelaunchIfRunning(relaunchIfRunning);
-                Cast.CastApi.launchApplication(mApiClient, mediaAppId, option).setResultCallback(webAppLaunchCallback);
+                LaunchOptions options = new LaunchOptions();
+                options.setRelaunchIfRunning(relaunchIfRunning);
+                Cast.CastApi.launchApplication(mApiClient, mediaAppId, options).setResultCallback(webAppLaunchCallback);
             }
         };
 
@@ -672,26 +674,66 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     public void launchWebApp(final String webAppId, final boolean relaunchIfRunning, final WebAppSession.LaunchListener listener) {
         launchingAppId = webAppId;
 
+        final LaunchWebAppListener launchWebAppListener = new LaunchWebAppListener() {
+            @Override
+            public void onSuccess(WebAppSession webAppSession) {
+                Util.postSuccess(listener, webAppSession);
+            }
+
+            @Override
+            public void onFailure(ServiceCommandError error) {
+                Util.postError(listener, error);
+            }
+        };
+
         ConnectionListener connectionListener = new ConnectionListener() {
 
             @Override
             public void onConnected() {
-                LaunchOptions option = new LaunchOptions();
-                option.setRelaunchIfRunning(relaunchIfRunning);
-                Cast.CastApi.launchApplication(mApiClient, webAppId, option).setResultCallback(
-                        new ApplicationConnectionResultCallback(new LaunchWebAppListener() {
+                // TODO Workaround, for some reason, if relaunchIfRunning is false, launchApplication returns 2005 error and cannot launch.
+                if (relaunchIfRunning == false) {
+                    Cast.CastApi.joinApplication(mApiClient).setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
 
-                            @Override
-                            public void onSuccess(WebAppSession webAppSession) {
+                        @Override
+                        public void onResult(ApplicationConnectionResult result) {
+                            if (result.getStatus().isSuccess() &&
+                                    result.getApplicationMetadata() != null &&
+                                    result.getApplicationMetadata().getName() != null &&
+                                    result.getApplicationMetadata().getApplicationId().equals(webAppId)) {
+                                ApplicationMetadata applicationMetadata = result.getApplicationMetadata();
+                                currentAppId = applicationMetadata.getApplicationId();
+
+                                LaunchSession launchSession = LaunchSession.launchSessionForAppId(applicationMetadata.getApplicationId());
+                                launchSession.setAppName(applicationMetadata.getName());
+                                launchSession.setSessionId(result.getSessionId());
+                                launchSession.setSessionType(LaunchSessionType.WebApp);
+                                launchSession.setService(CastService.this);
+
+                                CastWebAppSession webAppSession = new CastWebAppSession(launchSession, CastService.this);
+                                webAppSession.setMetadata(applicationMetadata);
+
+                                sessions.put(applicationMetadata.getApplicationId(), webAppSession);
+
                                 Util.postSuccess(listener, webAppSession);
                             }
+                            else {
+                                LaunchOptions options = new LaunchOptions();
+                                options.setRelaunchIfRunning(true);
 
-                            @Override
-                            public void onFailure(ServiceCommandError error) {
-                                Util.postError(listener, error);
+                                Cast.CastApi.launchApplication(mApiClient, webAppId, options).setResultCallback(
+                                        new ApplicationConnectionResultCallback(launchWebAppListener));
                             }
-                        })
-                );
+                        }
+                    });
+                }
+                else {
+                    LaunchOptions options = new LaunchOptions();
+                    options.setRelaunchIfRunning(relaunchIfRunning);
+
+                    Cast.CastApi.launchApplication(mApiClient, webAppId, options).setResultCallback(
+                            new ApplicationConnectionResultCallback(launchWebAppListener)
+                    );
+                }
             }
         };
 
@@ -707,6 +749,69 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     public void launchWebApp(String webAppId, JSONObject params, boolean relaunchIfRunning, WebAppSession.LaunchListener listener) {
         Util.postError(listener, ServiceCommandError.notSupported());
     }
+    
+    public void requestStatus(final ResponseListener<Object> listener) {
+        if (mMediaPlayer != null) {
+            mMediaPlayer
+            .requestStatus(mApiClient)
+            .setResultCallback(
+                    new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
+
+                        @Override
+                        public void onResult(MediaChannelResult result) {
+                            if (result.getStatus().isSuccess()) {
+                                Util.postSuccess(listener, result);
+                            }
+                            else {
+                                Util.postError(listener, new ServiceCommandError(0, "Failed to request status", result));
+                            }
+                        }
+                    });
+        }
+        else {
+            Util.postError(listener, new ServiceCommandError(0, "There is no media currently available", null));
+        }
+    }
+
+    public void joinApplication(final ResponseListener<Object> listener) {
+        ConnectionListener connectionListener = new ConnectionListener() {
+
+            @Override
+            public void onConnected() {
+                Cast.CastApi.joinApplication(mApiClient).setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
+
+                    @Override
+                    public void onResult(ApplicationConnectionResult result) {
+                        if (result.getStatus().isSuccess()) {
+                            // TODO: Maybe there is better way to check current cast device is showing backdrop, but for now, if chromecast is showing backdrop, then requestStatus would never response.
+                            if (result.getApplicationMetadata() != null &&
+                                result.getApplicationMetadata().getName() != null &&
+                                !result.getApplicationMetadata().getName().equals("Backdrop") &&
+                                mMediaPlayer != null) {
+
+                                mMediaPlayer.requestStatus(mApiClient).setResultCallback(
+                                    new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
+
+                                        @Override
+                                        public void onResult(MediaChannelResult result) {
+                                            Util.postSuccess(listener, result);
+                                        }
+                                });
+                            }
+                            else {
+                                Util.postSuccess(listener, result);
+                            }
+                        }
+                        else {
+                            Util.postError(listener, new ServiceCommandError(0, "Failed to join application", result));
+                        }
+                    }
+                });
+            }
+        };
+
+        runCommand(connectionListener);
+    }
 
     @Override
     public void joinWebApp(final LaunchSession webAppLaunchSession, final WebAppSession.LaunchListener listener) {
@@ -718,7 +823,18 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
                     @Override
                     public void onSuccess(Object object) {
-                        Util.postSuccess(listener, webAppSession);
+                        requestStatus(new ResponseListener<Object>() {
+                            @Override
+                            public void onSuccess(Object object) {
+                                Util.postSuccess(listener, webAppSession);
+                            }
+
+                            @Override
+                            public void onError(ServiceCommandError error) {
+                                // we sent success, because join is already succeeded.
+                                Util.postSuccess(listener, webAppSession);
+                            }
+                        });
                     }
 
                     @Override
@@ -1052,14 +1168,40 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
             attachMediaPlayer();
 
+            Cast.CastApi.joinApplication(mApiClient).setResultCallback(new ResultCallback<Cast.ApplicationConnectionResult>() {
+
+                @Override
+                public void onResult(ApplicationConnectionResult result) {
+                    if (result.getStatus().isSuccess()) {
+                        // TODO: Maybe there is better way to check current cast device is showing backdrop, but for now, if chromecast is showing backdrop, then requestStatus would never response.
+                        if (result.getApplicationMetadata() != null &&
+                            result.getApplicationMetadata().getName() != null &&
+                            !result.getApplicationMetadata().getName().equals("Backdrop") &&
+                            mMediaPlayer != null) {
+
+                            mMediaPlayer.requestStatus(mApiClient).setResultCallback(
+                                new ResultCallback<RemoteMediaPlayer.MediaChannelResult>() {
+
+                                    @Override
+                                    public void onResult(MediaChannelResult result) {
+                                        joinFinished();
+                                    }
+                            });
+                        }
+                        else {
+                            joinFinished();
+                        }
+                    }
+                    else {
+                        joinFinished();
+                    }
+                }
+            });
+        }
+
+        private void joinFinished() {
             if (mWaitingForReconnect) {
                 mWaitingForReconnect = false;
-
-                if (Cast.CastApi.getApplicationStatus(mApiClient) != null && currentAppId != null) {
-                    CastWebAppSession webAppSession = sessions.get(currentAppId);
-
-                    webAppSession.connect(null);
-                }
             }
             else {
                 connected = true;
