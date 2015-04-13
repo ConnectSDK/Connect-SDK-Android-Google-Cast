@@ -61,6 +61,7 @@ import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.Cast.ApplicationConnectionResult;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
+import com.google.android.gms.cast.LaunchOptions;
 import com.google.android.gms.cast.MediaMetadata;
 import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.cast.RemoteMediaPlayer.MediaChannelResult;
@@ -620,7 +621,9 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 if (Cast.CastApi.getApplicationStatus(mApiClient) == null || (!mediaAppId.equals(currentAppId)))
                     relaunchIfRunning = true;
 
-                Cast.CastApi.launchApplication(mApiClient, mediaAppId, relaunchIfRunning).setResultCallback(webAppLaunchCallback);
+                LaunchOptions option = new LaunchOptions();
+                option.setRelaunchIfRunning(relaunchIfRunning);
+                Cast.CastApi.launchApplication(mApiClient, mediaAppId, option).setResultCallback(webAppLaunchCallback);
             }
         };
 
@@ -673,7 +676,9 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
             @Override
             public void onConnected() {
-                Cast.CastApi.launchApplication(mApiClient, webAppId, relaunchIfRunning).setResultCallback(
+                LaunchOptions option = new LaunchOptions();
+                option.setRelaunchIfRunning(relaunchIfRunning);
+                Cast.CastApi.launchApplication(mApiClient, webAppId, option).setResultCallback(
                         new ApplicationConnectionResultCallback(new LaunchWebAppListener() {
 
                             @Override
