@@ -83,7 +83,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
                 .addControlCategory(CastMediaControlIntent.categoryForCast(CastService.getApplicationID()))
                 .build();
             } catch (IllegalArgumentException e) {
-                Log.w("Connect SDK", "Invalid application ID: " + CastService.getApplicationID());
+                Log.w(Util.T, "Invalid application ID: " + CastService.getApplicationID());
                 for (DiscoveryProviderListener listener : serviceListeners) {
                     listener.onServiceDiscoveryFailed(this, new ServiceCommandError(0, "Invalid application ID: " + CastService.getApplicationID(), null));
                 }

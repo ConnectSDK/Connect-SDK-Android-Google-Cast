@@ -84,7 +84,6 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     // @cond INTERNAL
 
     public static final String ID = "Chromecast";
-    public final static String TAG = "Connect SDK";
 
     public final static String PLAY_STATE = "PlayState";
     public final static String CAST_SERVICE_VOLUME_SUBSCRIPTION_NAME = "volume";
@@ -459,7 +458,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 Cast.CastApi.setMessageReceivedCallbacks(mApiClient, mMediaPlayer.getNamespace(),
                         mMediaPlayer);
             } catch (Exception e) {
-                Log.w("Connect SDK", "Exception while creating media channel", e);
+                Log.w(Util.T, "Exception while creating media channel", e);
             }
         }
     }
@@ -474,7 +473,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 Cast.CastApi.removeMessageReceivedCallbacks(mApiClient,
                         mMediaPlayer.getNamespace());
             } catch (IOException e) {
-                Log.w("Connect SDK", "Exception while launching application", e);
+                Log.w(Util.T, "Exception while launching application", e);
             }
         }
         mMediaPlayer = null;
@@ -1082,7 +1081,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     private class CastListener extends Cast.Listener {
         @Override
         public void onApplicationDisconnected(int statusCode) {
-            Log.d("Connect SDK", "Cast.Listener.onApplicationDisconnected: " + statusCode);
+            Log.d(Util.T, "Cast.Listener.onApplicationDisconnected: " + statusCode);
 
             if (currentAppId == null)
                 return;
@@ -1156,7 +1155,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     private class ConnectionCallbacks implements GoogleApiClient.ConnectionCallbacks {
         @Override
         public void onConnectionSuspended(final int cause) {
-            Log.d("Connect SDK", "ConnectionCallbacks.onConnectionSuspended");
+            Log.d(Util.T, "ConnectionCallbacks.onConnectionSuspended");
 
             mWaitingForReconnect = true;
             detachMediaPlayer();
@@ -1164,7 +1163,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
         @Override
         public void onConnected(Bundle connectionHint) {
-            Log.d("Connect SDK", "ConnectionCallbacks.onConnected, wasWaitingForReconnect: " + mWaitingForReconnect);
+            Log.d(Util.T, "ConnectionCallbacks.onConnected, wasWaitingForReconnect: " + mWaitingForReconnect);
 
             attachMediaPlayer();
 
@@ -1221,7 +1220,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     private class ConnectionFailedListener implements GoogleApiClient.OnConnectionFailedListener {
         @Override
         public void onConnectionFailed(final ConnectionResult result) {
-            Log.d("Connect SDK", "ConnectionFailedListener.onConnectionFailed " + (result != null ? result: ""));
+            Log.d(Util.T, "ConnectionFailedListener.onConnectionFailed " + (result != null ? result: ""));
 
             detachMediaPlayer();
             connected = false;
