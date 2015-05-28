@@ -117,35 +117,38 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
     }
 
     private void sendSearch() {
-        List<String> killKeys = new ArrayList<String>();
-
-        long killPoint = new Date().getTime() - TIMEOUT;
-
-        for (String key : foundServices.keySet()) {
-            ServiceDescription service = foundServices.get(key);
-            if (service == null || service.getLastDetection() < killPoint) {
-                killKeys.add(key);
-            }
-        }
-
-        for (String key : killKeys) {
-            final ServiceDescription service = foundServices.get(key);
-
-            if (service != null) {
-                Util.runOnUI(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        for (DiscoveryProviderListener listener : serviceListeners) {
-                            listener.onServiceRemoved(CastDiscoveryProvider.this, service);
-                        }
-                    }
-                });
-            }
-
-            if (foundServices.containsKey(key))
-                foundServices.remove(key);
-        }
+        // This has been commented out becuase of the issue
+        // https://github.com/ConnectSDK/Connect-SDK-Android-Google-Cast/issues/9#issuecomment-105659416
+        // https://github.com/ConnectSDK/Connect-SDK-Android/issues/254
+//        List<String> killKeys = new ArrayList<String>();
+//
+//        long killPoint = new Date().getTime() - TIMEOUT;
+//
+//        for (String key : foundServices.keySet()) {
+//            ServiceDescription service = foundServices.get(key);
+//            if (service == null || service.getLastDetection() < killPoint) {
+//                killKeys.add(key);
+//            }
+//        }
+//
+//        for (String key : killKeys) {
+//            final ServiceDescription service = foundServices.get(key);
+//
+//            if (service != null) {
+//                Util.runOnUI(new Runnable() {
+//
+//                    @Override
+//                    public void run() {
+//                        for (DiscoveryProviderListener listener : serviceListeners) {
+//                            listener.onServiceRemoved(CastDiscoveryProvider.this, service);
+//                        }
+//                    }
+//                });
+//            }
+//
+//            if (foundServices.containsKey(key))
+//                foundServices.remove(key);
+//        }
 
         rescan();
     }
@@ -314,25 +317,26 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         @Override
         public void onRouteRemoved(MediaRouter router, RouteInfo route) {
             super.onRouteRemoved(router, route);
+            Log.d(Util.T, "Service [" + route.getName() + "] has been removed");
 
-//            CastDevice castDevice = CastDevice.getFromBundle(route.getExtras());
-//            String uuid = castDevice.getDeviceId();
-//
-//            final ServiceDescription service = foundServices.get(uuid);
-//
-//            if (service != null) {
-//                Util.runOnUI(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
-//                        for (DiscoveryProviderListener listener : serviceListeners) {
-//                            listener.onServiceRemoved(CastDiscoveryProvider.this, service);
-//                        }
-//                    }
-//                });
-//
-//                foundServices.remove(uuid);
-//            }
+            CastDevice castDevice = CastDevice.getFromBundle(route.getExtras());
+            String uuid = castDevice.getDeviceId();
+
+            final ServiceDescription service = foundServices.get(uuid);
+
+            if (service != null) {
+                Util.runOnUI(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        for (DiscoveryProviderListener listener : serviceListeners) {
+                            listener.onServiceRemoved(CastDiscoveryProvider.this, service);
+                        }
+                    }
+                });
+
+                foundServices.remove(uuid);
+            }
         }
 
         @Override
