@@ -56,7 +56,8 @@ public class CastDiscoveryProviderTest {
 
 	@Test
 	public void testStart() throws Exception {
-		// TEST DESC.: start method should invoke MediaRouter removeCallback and addCalback for stopping and starting services
+		// TEST DESC.: start method should invoke MediaRouter removeCallback and addCalback
+		// for stopping and starting services
 		
 		// when
 		dp.start();
@@ -64,7 +65,7 @@ public class CastDiscoveryProviderTest {
 		// waiting for timer call
 		Thread.sleep(200);
 		Robolectric.runUiThreadTasksIncludingDelayedTasks();
-		
+
 		// then
 		verify(mediaRouter).addCallback(any(MediaRouteSelector.class), 
 				any(MediaRouter.Callback.class), eq(MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN));
