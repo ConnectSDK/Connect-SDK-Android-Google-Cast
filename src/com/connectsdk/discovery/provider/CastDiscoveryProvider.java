@@ -20,14 +20,6 @@
 
 package com.connectsdk.discovery.provider;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import android.content.Context;
 import android.support.v7.media.MediaRouteSelector;
 import android.support.v7.media.MediaRouter;
@@ -44,6 +36,12 @@ import com.connectsdk.service.config.CastServiceDescription;
 import com.connectsdk.service.config.ServiceDescription;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
+
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CastDiscoveryProvider implements DiscoveryProvider {
     private MediaRouter mMediaRouter;
@@ -80,12 +78,14 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         if (mMediaRouteSelector == null) {
             try {
                 mMediaRouteSelector = new MediaRouteSelector.Builder()
-                .addControlCategory(CastMediaControlIntent.categoryForCast(CastService.getApplicationID()))
+                .addControlCategory(CastMediaControlIntent.categoryForCast(
+                        CastService.getApplicationID()))
                 .build();
             } catch (IllegalArgumentException e) {
                 Log.w(Util.T, "Invalid application ID: " + CastService.getApplicationID());
                 for (DiscoveryProviderListener listener : serviceListeners) {
-                    listener.onServiceDiscoveryFailed(this, new ServiceCommandError(0, "Invalid application ID: " + CastService.getApplicationID(), null));
+                    listener.onServiceDiscoveryFailed(this, new ServiceCommandError(0,
+                            "Invalid application ID: " + CastService.getApplicationID(), null));
                 }
                 return;
             }
@@ -96,7 +96,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
             @Override
             public void run() {
-                sendSearch();
+                rescan();
             }
         }, 100, RESCAN_INTERVAL);
 
@@ -114,43 +114,6 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
                 });
             }
         }, 9100, RESCAN_INTERVAL);
-    }
-
-    private void sendSearch() {
-        // This has been commented out becuase of the issue
-        // https://github.com/ConnectSDK/Connect-SDK-Android-Google-Cast/issues/9#issuecomment-105659416
-        // https://github.com/ConnectSDK/Connect-SDK-Android/issues/254
-//        List<String> killKeys = new ArrayList<String>();
-//
-//        long killPoint = new Date().getTime() - TIMEOUT;
-//
-//        for (String key : foundServices.keySet()) {
-//            ServiceDescription service = foundServices.get(key);
-//            if (service == null || service.getLastDetection() < killPoint) {
-//                killKeys.add(key);
-//            }
-//        }
-//
-//        for (String key : killKeys) {
-//            final ServiceDescription service = foundServices.get(key);
-//
-//            if (service != null) {
-//                Util.runOnUI(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
-//                        for (DiscoveryProviderListener listener : serviceListeners) {
-//                            listener.onServiceRemoved(CastDiscoveryProvider.this, service);
-//                        }
-//                    }
-//                });
-//            }
-//
-//            if (foundServices.containsKey(key))
-//                foundServices.remove(key);
-//        }
-
-        rescan();
     }
 
     @Override
@@ -196,7 +159,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
             @Override
             public void run() {
-                mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback, MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
+                mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
+                        MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
             }
         });
     }
@@ -225,6 +189,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         return false;
     }
 
+
     private class MediaRouterCallback extends MediaRouter.Callback {
 
         @Override
@@ -240,7 +205,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             boolean listUpdateFlag = false;
 
             if (isNew) {
-                foundService = new CastServiceDescription(CastService.ID, uuid, castDevice.getIpAddress().getHostAddress(), castDevice);
+                foundService = new CastServiceDescription(CastService.ID, uuid,
+                        castDevice.getIpAddress().getHostAddress(), castDevice);
                 foundService.setFriendlyName(castDevice.getFriendlyName());
                 foundService.setModelName(castDevice.getModelName());
                 foundService.setModelNumber(castDevice.getDeviceVersion());
@@ -310,7 +276,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         @Override
         public void onRoutePresentationDisplayChanged(MediaRouter router,
                 RouteInfo route) {
-            Log.d(Util.T, "onRoutePresentationDisplayChanged: [" + route.getName() + "] [" + route.getDescription() + "]");
+            Log.d(Util.T, "onRoutePresentationDisplayChanged: [" + route.getName() + "] ["
+                    + route.getDescription() + "]");
             super.onRoutePresentationDisplayChanged(router, route);
         }
 
@@ -341,7 +308,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
         @Override
         public void onRouteVolumeChanged(MediaRouter router, RouteInfo route) {
-            Log.d(Util.T, "onRouteVolumeChanged: [" + route.getName() + "] [" + route.getDescription() + "]");
+            Log.d(Util.T, "onRouteVolumeChanged: [" + route.getName() + "] ["
+                    + route.getDescription() + "]");
             super.onRouteVolumeChanged(router, route);
         }
 
