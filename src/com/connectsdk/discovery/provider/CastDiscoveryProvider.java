@@ -138,7 +138,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             @Override
             public void run() {
                 mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
-                        MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
+                        MediaRouter.CALLBACK_FLAG_FORCE_DISCOVERY);
             }
         });
     }
