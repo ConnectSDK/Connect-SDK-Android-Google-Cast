@@ -38,7 +38,6 @@ import com.connectsdk.service.capability.listeners.ResponseListener;
 import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.command.ServiceSubscription;
 import com.connectsdk.service.command.URLServiceSubscription;
-import com.connectsdk.service.config.CastServiceDescription;
 import com.connectsdk.service.config.ServiceConfig;
 import com.connectsdk.service.config.ServiceDescription;
 import com.connectsdk.service.sessions.CastWebAppSession;
@@ -168,8 +167,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             return;
 
         if (castDevice == null) {
-            if (getServiceDescription() instanceof CastServiceDescription)
-                this.castDevice = ((CastServiceDescription)getServiceDescription()).getCastDevice();
+            this.castDevice = (CastDevice) getServiceDescription().getDevice();
         }
 
         if (mApiClient == null) {
