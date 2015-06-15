@@ -91,29 +91,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             }
         }
 
-        addCallbackTimer = new Timer();
-        addCallbackTimer.schedule(new TimerTask() {
-
-            @Override
-            public void run() {
-                rescan();
-            }
-        }, 100, RESCAN_INTERVAL);
-
-        removeCallbackTimer = new Timer();
-        removeCallbackTimer.schedule(new TimerTask() {
-
-            @Override
-            public void run() {
-                Util.runOnUI(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        mMediaRouter.removeCallback(mMediaRouterCallback);
-                    }
-                });
-            }
-        }, 9100, RESCAN_INTERVAL);
+        rescan();
     }
 
     @Override
@@ -160,7 +138,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             @Override
             public void run() {
                 mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
-                        MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
+                        MediaRouter.CALLBACK_FLAG_FORCE_DISCOVERY);
             }
         });
     }
