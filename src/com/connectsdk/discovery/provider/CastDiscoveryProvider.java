@@ -39,7 +39,6 @@ import com.google.android.gms.cast.CastMediaControlIntent;
 
 import java.util.Date;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -138,7 +137,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             @Override
             public void run() {
                 mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
-                        MediaRouter.CALLBACK_FLAG_FORCE_DISCOVERY);
+                        MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
             }
         });
     }

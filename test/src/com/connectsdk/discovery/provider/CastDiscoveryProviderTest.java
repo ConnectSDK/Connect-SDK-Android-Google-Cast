@@ -70,7 +70,7 @@ public class CastDiscoveryProviderTest {
 
         // then
         verify(mediaRouter).addCallback(any(MediaRouteSelector.class),
-                any(MediaRouter.Callback.class), eq(MediaRouter.CALLBACK_FLAG_FORCE_DISCOVERY));
+                any(MediaRouter.Callback.class), eq(MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY));
     }
 
     @Test
