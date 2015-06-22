@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CastDiscoveryProvider implements DiscoveryProvider {
-    private static final long ROUTE_REMOVE_INTERVAL = 2000;
+    private static final long ROUTE_REMOVE_INTERVAL = 3000;
 
     private MediaRouter mMediaRouter;
     private MediaRouteSelector mMediaRouteSelector;
@@ -165,13 +165,11 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         return false;
     }
 
-
     private class MediaRouterCallback extends MediaRouter.Callback {
 
         @Override
         public void onRouteAdded(MediaRouter router, RouteInfo route) {
             super.onRouteAdded(router, route);
-            Log.d(Util.T, "Service [" + route.getName() + "] has been added");
 
             CastDevice castDevice = CastDevice.getFromBundle(route.getExtras());
             String uuid = castDevice.getDeviceId();
@@ -218,7 +216,6 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         @Override
         public void onRouteChanged(MediaRouter router, RouteInfo route) {
             super.onRouteChanged(router, route);
-            Log.d(Util.T, "Service [" + route.getName() + "] has been changed");
 
             CastDevice castDevice = CastDevice.getFromBundle(route.getExtras());
             String uuid = castDevice.getDeviceId();
@@ -262,9 +259,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         }
 
         @Override
-        public void onRouteRemoved(MediaRouter router, RouteInfo route) {
+        public void onRouteRemoved(final MediaRouter router, final RouteInfo route) {
             super.onRouteRemoved(router, route);
-            Log.d(Util.T, "Service [" + route.getName() + "] has been removed");
 
             CastDevice castDevice = CastDevice.getFromBundle(route.getExtras());
             String uuid = castDevice.getDeviceId();
@@ -280,6 +276,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
                         for (String uuid : removedUUID) {
                             final ServiceDescription service = foundServices.get(uuid);
                             if (service != null) {
+                                Log.d(Util.T, "Service [" + route.getName() + "] has been removed");
                                 Util.runOnUI(new Runnable() {
 
                                     @Override
