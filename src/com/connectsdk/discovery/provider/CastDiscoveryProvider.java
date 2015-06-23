@@ -38,20 +38,24 @@ import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class CastDiscoveryProvider implements DiscoveryProvider {
+    private static final long ROUTE_REMOVE_INTERVAL = 3000;
+
     private MediaRouter mMediaRouter;
     private MediaRouteSelector mMediaRouteSelector;
     protected MediaRouter.Callback mMediaRouterCallback;
 
+    private List<String> removedUUID = new CopyOnWriteArrayList<String>();
     protected ConcurrentHashMap<String, ServiceDescription> foundServices;
     protected CopyOnWriteArrayList<DiscoveryProviderListener> serviceListeners;
 
-    private Timer addCallbackTimer;
-    private Timer removeCallbackTimer;
+    private Timer removeRoutesTimer;
 
     boolean isRunning = false;
 
@@ -97,14 +101,9 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
     public void stop() {
         isRunning = false;
 
-        if (addCallbackTimer != null) {
-            addCallbackTimer.cancel();
-            addCallbackTimer = null;
-        }
-
-        if (removeCallbackTimer != null) {
-            removeCallbackTimer.cancel();
-            removeCallbackTimer = null;
+        if (removeRoutesTimer != null) {
+            removeRoutesTimer.cancel();
+            removeRoutesTimer = null;
         }
 
         if (mMediaRouter != null) {
@@ -166,7 +165,6 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         return false;
     }
 
-
     private class MediaRouterCallback extends MediaRouter.Callback {
 
         @Override
@@ -175,6 +173,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
             CastDevice castDevice = CastDevice.getFromBundle(route.getExtras());
             String uuid = castDevice.getDeviceId();
+
+            removedUUID.remove(uuid);
 
             ServiceDescription foundService = foundServices.get(uuid);
 
@@ -259,27 +259,39 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         }
 
         @Override
-        public void onRouteRemoved(MediaRouter router, RouteInfo route) {
+        public void onRouteRemoved(final MediaRouter router, final RouteInfo route) {
             super.onRouteRemoved(router, route);
-            Log.d(Util.T, "Service [" + route.getName() + "] has been removed");
 
             CastDevice castDevice = CastDevice.getFromBundle(route.getExtras());
             String uuid = castDevice.getDeviceId();
+            removedUUID.add(uuid);
 
-            final ServiceDescription service = foundServices.get(uuid);
-
-            if (service != null) {
-                Util.runOnUI(new Runnable() {
-
+            // Prevent immediate removing. There are some cases when service is removed and added
+            // again after a second.
+            if (removeRoutesTimer == null) {
+                removeRoutesTimer = new Timer();
+                removeRoutesTimer.schedule(new TimerTask() {
                     @Override
                     public void run() {
-                        for (DiscoveryProviderListener listener : serviceListeners) {
-                            listener.onServiceRemoved(CastDiscoveryProvider.this, service);
-                        }
-                    }
-                });
+                        for (String uuid : removedUUID) {
+                            final ServiceDescription service = foundServices.get(uuid);
+                            if (service != null) {
+                                Log.d(Util.T, "Service [" + route.getName() + "] has been removed");
+                                Util.runOnUI(new Runnable() {
 
-                foundServices.remove(uuid);
+                                    @Override
+                                    public void run() {
+                                        for (DiscoveryProviderListener listener : serviceListeners) {
+                                            listener.onServiceRemoved(CastDiscoveryProvider.this, service);
+                                        }
+                                    }
+                                });
+                                foundServices.remove(uuid);
+                            }
+                        }
+                        removedUUID.clear();
+                    }
+                }, ROUTE_REMOVE_INTERVAL);
             }
         }
 
