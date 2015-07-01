@@ -10,8 +10,8 @@ It's already integrated in Connect-SDK-Android. Set it up following the instruct
 
 ###Connect SDK Lite Integration
 1. Setup [Connect-SDK-Android-Lite](https://github.com/ConnectSDK/Connect-SDK-Android-Lite)
-2. Clone this repository into a subfolder of the Connect SDK Lite project (e.g. modules/google_cast)
-3. Add sources files for Google Cast module in your build.gradle, it should looks similar to this (here we have Google Cast module in modules/google_cast folder):
+2. Clone this repository into a subfolder of the Connect SDK Lite project (e.g. `modules/google_cast`)
+3. Add sources files for Google Cast module in your `build.gradle`, it should looks similar to this (here we have Google Cast module in `modules/google_cast` folder):
     ```groovy
         sourceSets {
             main {
