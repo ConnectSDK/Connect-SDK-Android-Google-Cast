@@ -6,6 +6,7 @@ import com.connectsdk.service.capability.listeners.ResponseListener;
 import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.config.ServiceConfig;
 import com.connectsdk.service.config.ServiceDescription;
+import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.MediaStatus;
 import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -40,6 +41,8 @@ public class CastServiceTest {
 
     RemoteMediaPlayer mediaPlayer = Mockito.mock(RemoteMediaPlayer.class);
 
+    ServiceDescription serviceDescription;
+
     class StubCastService extends CastService {
 
         public StubCastService(ServiceDescription serviceDescription,
@@ -55,7 +58,8 @@ public class CastServiceTest {
 
     @Before
     public void setUp() {
-        service = new StubCastService(mock(ServiceDescription.class), mock(ServiceConfig.class));
+        serviceDescription = mock(ServiceDescription.class);
+        service = new StubCastService(serviceDescription, mock(ServiceConfig.class));
         Assert.assertNotNull(service);
     }
 
@@ -266,5 +270,14 @@ public class CastServiceTest {
     @Test
     public void testGetMediaPlayer() {
         Assert.assertSame(service, service.getMediaPlayer());
+    }
+
+    @Test
+    public void testCastDeviceShouldBeAssignedFromServiceDescription() {
+        CastDevice device = Mockito.mock(CastDevice.class);
+        service.connected = false;
+        Mockito.when(serviceDescription.getDevice()).thenReturn(device);
+        service.connect();
+        Assert.assertSame(device, service.castDevice);
     }
 }

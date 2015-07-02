@@ -32,7 +32,6 @@ import com.connectsdk.discovery.DiscoveryProvider;
 import com.connectsdk.discovery.DiscoveryProviderListener;
 import com.connectsdk.service.CastService;
 import com.connectsdk.service.command.ServiceCommandError;
-import com.connectsdk.service.config.CastServiceDescription;
 import com.connectsdk.service.config.ServiceDescription;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
@@ -182,14 +181,15 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             boolean listUpdateFlag = false;
 
             if (isNew) {
-                foundService = new CastServiceDescription(CastService.ID, uuid,
-                        castDevice.getIpAddress().getHostAddress(), castDevice);
+                foundService = new ServiceDescription(CastService.ID, uuid,
+                        castDevice.getIpAddress().getHostAddress());
                 foundService.setFriendlyName(castDevice.getFriendlyName());
                 foundService.setModelName(castDevice.getModelName());
                 foundService.setModelNumber(castDevice.getDeviceVersion());
                 foundService.setModelDescription(route.getDescription());
                 foundService.setPort(castDevice.getServicePort());
                 foundService.setServiceID(CastService.ID);
+                foundService.setDevice(castDevice);
 
                 listUpdateFlag = true;
             }
@@ -199,7 +199,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
                     listUpdateFlag = true;
                 }
 
-                ((CastServiceDescription)foundService).setCastDevice(castDevice);
+                foundService.setDevice(castDevice);
             }
 
             foundService.setLastDetection(new Date().getTime());
@@ -231,7 +231,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
                 foundService.setModelNumber(castDevice.getDeviceVersion());
                 foundService.setModelDescription(route.getDescription());
                 foundService.setPort(castDevice.getServicePort());
-                ((CastServiceDescription)foundService).setCastDevice(castDevice);
+                foundService.setDevice(castDevice);
 
                 if (!foundService.getFriendlyName().equals(castDevice.getFriendlyName())) {
                     foundService.setFriendlyName(castDevice.getFriendlyName());
@@ -273,23 +273,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
                 removeRoutesTimer.schedule(new TimerTask() {
                     @Override
                     public void run() {
-                        for (String uuid : removedUUID) {
-                            final ServiceDescription service = foundServices.get(uuid);
-                            if (service != null) {
-                                Log.d(Util.T, "Service [" + route.getName() + "] has been removed");
-                                Util.runOnUI(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        for (DiscoveryProviderListener listener : serviceListeners) {
-                                            listener.onServiceRemoved(CastDiscoveryProvider.this, service);
-                                        }
-                                    }
-                                });
-                                foundServices.remove(uuid);
-                            }
-                        }
-                        removedUUID.clear();
+                        removeServices(route);
                     }
                 }, ROUTE_REMOVE_INTERVAL);
             }
@@ -302,5 +286,24 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             super.onRouteVolumeChanged(router, route);
         }
 
+        private void removeServices(RouteInfo route) {
+            for (String uuid : removedUUID) {
+                final ServiceDescription service = foundServices.get(uuid);
+                if (service != null) {
+                    Log.d(Util.T, "Service [" + route.getName() + "] has been removed");
+                    Util.runOnUI(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            for (DiscoveryProviderListener listener : serviceListeners) {
+                                listener.onServiceRemoved(CastDiscoveryProvider.this, service);
+                            }
+                        }
+                    });
+                    foundServices.remove(uuid);
+                }
+            }
+            removedUUID.clear();
+        }
     }
 }
