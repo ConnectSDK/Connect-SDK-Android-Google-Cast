@@ -620,9 +620,10 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                                     if (status.isSuccess()) {
                                         webAppSession.launchSession.setSessionType(LaunchSessionType.Media);
 
+                                        // White text, black outline, no background
                                         TextTrackStyle textTrackStyle = new TextTrackStyle();
-                                        textTrackStyle.setForegroundColor(Color.WHITE);
-                                        textTrackStyle.setBackgroundColor(Color.TRANSPARENT);
+                                        textTrackStyle.setForegroundColor(Color.parseColor("#FFFFFFFF"));
+                                        textTrackStyle.setBackgroundColor(Color.parseColor("#01000000"));
                                         textTrackStyle.setWindowType(TextTrackStyle.WINDOW_TYPE_NONE);
                                         textTrackStyle.setEdgeType(TextTrackStyle.EDGE_TYPE_OUTLINE);
                                         textTrackStyle.setEdgeColor(Color.BLACK);
