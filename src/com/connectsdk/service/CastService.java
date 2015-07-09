@@ -531,7 +531,6 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         displayImage(mediaUrl, mimeType, title, desc, iconSrc, listener);
     }
 
-    @Override
     public void playMedia(String url, String subsUrl, String mimeType, String title,
                           String description, String iconSrc, boolean shouldLoop,
                           LaunchListener listener) {
