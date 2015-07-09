@@ -20,14 +20,6 @@
 
 package com.connectsdk.discovery.provider;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-
 import android.content.Context;
 import android.support.v7.media.MediaRouteSelector;
 import android.support.v7.media.MediaRouter;
@@ -40,21 +32,29 @@ import com.connectsdk.discovery.DiscoveryProvider;
 import com.connectsdk.discovery.DiscoveryProviderListener;
 import com.connectsdk.service.CastService;
 import com.connectsdk.service.command.ServiceCommandError;
-import com.connectsdk.service.config.CastServiceDescription;
 import com.connectsdk.service.config.ServiceDescription;
 import com.google.android.gms.cast.CastDevice;
 import com.google.android.gms.cast.CastMediaControlIntent;
 
+import java.util.Date;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 public class CastDiscoveryProvider implements DiscoveryProvider {
+    private static final long ROUTE_REMOVE_INTERVAL = 3000;
+
     private MediaRouter mMediaRouter;
     private MediaRouteSelector mMediaRouteSelector;
     protected MediaRouter.Callback mMediaRouterCallback;
 
+    private List<String> removedUUID = new CopyOnWriteArrayList<String>();
     protected ConcurrentHashMap<String, ServiceDescription> foundServices;
     protected CopyOnWriteArrayList<DiscoveryProviderListener> serviceListeners;
 
-    private Timer addCallbackTimer;
-    private Timer removeCallbackTimer;
+    private Timer removeRoutesTimer;
 
     boolean isRunning = false;
 
@@ -80,71 +80,17 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         if (mMediaRouteSelector == null) {
             try {
                 mMediaRouteSelector = new MediaRouteSelector.Builder()
-                .addControlCategory(CastMediaControlIntent.categoryForCast(CastService.getApplicationID()))
+                .addControlCategory(CastMediaControlIntent.categoryForCast(
+                        CastService.getApplicationID()))
                 .build();
             } catch (IllegalArgumentException e) {
-                Log.w("Connect SDK", "Invalid application ID: " + CastService.getApplicationID());
+                Log.w(Util.T, "Invalid application ID: " + CastService.getApplicationID());
                 for (DiscoveryProviderListener listener : serviceListeners) {
-                    listener.onServiceDiscoveryFailed(this, new ServiceCommandError(0, "Invalid application ID: " + CastService.getApplicationID(), null));
+                    listener.onServiceDiscoveryFailed(this, new ServiceCommandError(0,
+                            "Invalid application ID: " + CastService.getApplicationID(), null));
                 }
                 return;
             }
-        }
-
-        addCallbackTimer = new Timer();
-        addCallbackTimer.schedule(new TimerTask() {
-
-            @Override
-            public void run() {
-                sendSearch();
-            }
-        }, 100, RESCAN_INTERVAL);
-
-        removeCallbackTimer = new Timer();
-        removeCallbackTimer.schedule(new TimerTask() {
-
-            @Override
-            public void run() {
-                Util.runOnUI(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        mMediaRouter.removeCallback(mMediaRouterCallback);
-                    }
-                });
-            }
-        }, 9100, RESCAN_INTERVAL);
-    }
-
-    private void sendSearch() {
-        List<String> killKeys = new ArrayList<String>();
-
-        long killPoint = new Date().getTime() - TIMEOUT;
-
-        for (String key : foundServices.keySet()) {
-            ServiceDescription service = foundServices.get(key);
-            if (service == null || service.getLastDetection() < killPoint) {
-                killKeys.add(key);
-            }
-        }
-
-        for (String key : killKeys) {
-            final ServiceDescription service = foundServices.get(key);
-
-            if (service != null) {
-                Util.runOnUI(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        for (DiscoveryProviderListener listener : serviceListeners) {
-                            listener.onServiceRemoved(CastDiscoveryProvider.this, service);
-                        }
-                    }
-                });
-            }
-
-            if (foundServices.containsKey(key))
-                foundServices.remove(key);
         }
 
         rescan();
@@ -154,14 +100,9 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
     public void stop() {
         isRunning = false;
 
-        if (addCallbackTimer != null) {
-            addCallbackTimer.cancel();
-            addCallbackTimer = null;
-        }
-
-        if (removeCallbackTimer != null) {
-            removeCallbackTimer.cancel();
-            removeCallbackTimer = null;
+        if (removeRoutesTimer != null) {
+            removeRoutesTimer.cancel();
+            removeRoutesTimer = null;
         }
 
         if (mMediaRouter != null) {
@@ -193,7 +134,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
 
             @Override
             public void run() {
-                mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback, MediaRouter.CALLBACK_FLAG_PERFORM_ACTIVE_SCAN);
+                mMediaRouter.addCallback(mMediaRouteSelector, mMediaRouterCallback,
+                        MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY);
             }
         });
     }
@@ -231,19 +173,23 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             CastDevice castDevice = CastDevice.getFromBundle(route.getExtras());
             String uuid = castDevice.getDeviceId();
 
+            removedUUID.remove(uuid);
+
             ServiceDescription foundService = foundServices.get(uuid);
 
             boolean isNew = foundService == null;
             boolean listUpdateFlag = false;
 
             if (isNew) {
-                foundService = new CastServiceDescription(CastService.ID, uuid, castDevice.getIpAddress().getHostAddress(), castDevice);
+                foundService = new ServiceDescription(CastService.ID, uuid,
+                        castDevice.getIpAddress().getHostAddress());
                 foundService.setFriendlyName(castDevice.getFriendlyName());
                 foundService.setModelName(castDevice.getModelName());
                 foundService.setModelNumber(castDevice.getDeviceVersion());
                 foundService.setModelDescription(route.getDescription());
                 foundService.setPort(castDevice.getServicePort());
                 foundService.setServiceID(CastService.ID);
+                foundService.setDevice(castDevice);
 
                 listUpdateFlag = true;
             }
@@ -253,7 +199,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
                     listUpdateFlag = true;
                 }
 
-                ((CastServiceDescription)foundService).setCastDevice(castDevice);
+                foundService.setDevice(castDevice);
             }
 
             foundService.setLastDetection(new Date().getTime());
@@ -285,7 +231,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
                 foundService.setModelNumber(castDevice.getDeviceVersion());
                 foundService.setModelDescription(route.getDescription());
                 foundService.setPort(castDevice.getServicePort());
-                ((CastServiceDescription)foundService).setCastDevice(castDevice);
+                foundService.setDevice(castDevice);
 
                 if (!foundService.getFriendlyName().equals(castDevice.getFriendlyName())) {
                     foundService.setFriendlyName(castDevice.getFriendlyName());
@@ -307,39 +253,57 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
         @Override
         public void onRoutePresentationDisplayChanged(MediaRouter router,
                 RouteInfo route) {
-            Log.d(Util.T, "onRoutePresentationDisplayChanged: [" + route.getName() + "] [" + route.getDescription() + "]");
+            Log.d(Util.T, "onRoutePresentationDisplayChanged: [" + route.getName() + "] ["
+                    + route.getDescription() + "]");
             super.onRoutePresentationDisplayChanged(router, route);
         }
 
         @Override
-        public void onRouteRemoved(MediaRouter router, RouteInfo route) {
+        public void onRouteRemoved(final MediaRouter router, final RouteInfo route) {
             super.onRouteRemoved(router, route);
 
-//            CastDevice castDevice = CastDevice.getFromBundle(route.getExtras());
-//            String uuid = castDevice.getDeviceId();
-//
-//            final ServiceDescription service = foundServices.get(uuid);
-//
-//            if (service != null) {
-//                Util.runOnUI(new Runnable() {
-//
-//                    @Override
-//                    public void run() {
-//                        for (DiscoveryProviderListener listener : serviceListeners) {
-//                            listener.onServiceRemoved(CastDiscoveryProvider.this, service);
-//                        }
-//                    }
-//                });
-//
-//                foundServices.remove(uuid);
-//            }
+            CastDevice castDevice = CastDevice.getFromBundle(route.getExtras());
+            String uuid = castDevice.getDeviceId();
+            removedUUID.add(uuid);
+
+            // Prevent immediate removing. There are some cases when service is removed and added
+            // again after a second.
+            if (removeRoutesTimer == null) {
+                removeRoutesTimer = new Timer();
+                removeRoutesTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        removeServices(route);
+                    }
+                }, ROUTE_REMOVE_INTERVAL);
+            }
         }
 
         @Override
         public void onRouteVolumeChanged(MediaRouter router, RouteInfo route) {
-            Log.d(Util.T, "onRouteVolumeChanged: [" + route.getName() + "] [" + route.getDescription() + "]");
+            Log.d(Util.T, "onRouteVolumeChanged: [" + route.getName() + "] ["
+                    + route.getDescription() + "]");
             super.onRouteVolumeChanged(router, route);
         }
 
+        private void removeServices(RouteInfo route) {
+            for (String uuid : removedUUID) {
+                final ServiceDescription service = foundServices.get(uuid);
+                if (service != null) {
+                    Log.d(Util.T, "Service [" + route.getName() + "] has been removed");
+                    Util.runOnUI(new Runnable() {
+
+                        @Override
+                        public void run() {
+                            for (DiscoveryProviderListener listener : serviceListeners) {
+                                listener.onServiceRemoved(CastDiscoveryProvider.this, service);
+                            }
+                        }
+                    });
+                    foundServices.remove(uuid);
+                }
+            }
+            removedUUID.clear();
+        }
     }
 }
