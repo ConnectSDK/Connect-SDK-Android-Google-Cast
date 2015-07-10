@@ -1132,7 +1132,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         capabilities.add(Seek);
         capabilities.add(Position);
         capabilities.add(PlayState);
-        capabilities.add(Subtitles);
+        capabilities.add(Subtitles_Vtt);
         capabilities.add(PlayState_Subscribe);
 
         capabilities.add(WebAppLauncher.Launch);
