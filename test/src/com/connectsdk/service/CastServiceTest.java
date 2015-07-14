@@ -1,7 +1,11 @@
 package com.connectsdk.service;
 
+import com.connectsdk.service.capability.MediaControl;
 import com.connectsdk.service.capability.MediaControl.DurationListener;
 import com.connectsdk.service.capability.MediaControl.PositionListener;
+import com.connectsdk.service.capability.MediaPlayer;
+import com.connectsdk.service.capability.VolumeControl;
+import com.connectsdk.service.capability.WebAppLauncher;
 import com.connectsdk.service.capability.listeners.ResponseListener;
 import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.config.ServiceConfig;
@@ -24,6 +28,10 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -279,5 +287,50 @@ public class CastServiceTest {
         Mockito.when(serviceDescription.getDevice()).thenReturn(device);
         service.connect();
         Assert.assertSame(device, service.castDevice);
+    }
+
+    @Test
+    public void testCapabilities() {
+        List<String> expectedCapabilities = Arrays.asList(
+                MediaPlayer.Display_Image,
+                MediaPlayer.Play_Video,
+                MediaPlayer.Play_Audio,
+                MediaPlayer.Close,
+                MediaPlayer.MetaData_Title,
+                MediaPlayer.MetaData_Description,
+                MediaPlayer.MetaData_Thumbnail,
+                MediaPlayer.MetaData_MimeType,
+                MediaPlayer.MediaInfo_Get,
+                MediaPlayer.MediaInfo_Subscribe,
+
+                VolumeControl.Volume_Get,
+                VolumeControl.Volume_Set,
+                VolumeControl.Volume_Up_Down,
+                VolumeControl.Volume_Subscribe,
+                VolumeControl.Mute_Get,
+                VolumeControl.Mute_Set,
+                VolumeControl.Mute_Subscribe,
+
+                MediaControl.Play,
+                MediaControl.Pause,
+                MediaControl.Stop,
+                MediaControl.Duration,
+                MediaControl.Seek,
+                MediaControl.Position,
+                MediaControl.PlayState,
+                MediaControl.PlayState_Subscribe,
+
+                WebAppLauncher.Launch,
+                WebAppLauncher.Message_Send,
+                WebAppLauncher.Message_Receive,
+                WebAppLauncher.Message_Send_JSON,
+                WebAppLauncher.Message_Receive_JSON,
+                WebAppLauncher.Connect,
+                WebAppLauncher.Disconnect,
+                WebAppLauncher.Join,
+                WebAppLauncher.Close
+        );
+        List<String> capabilities = service.getCapabilities();
+        Assert.assertEquals(expectedCapabilities, capabilities);
     }
 }
