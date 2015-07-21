@@ -318,6 +318,7 @@ public class CastServiceTest {
                 MediaControl.Seek,
                 MediaControl.Position,
                 MediaControl.PlayState,
+                MediaPlayer.Subtitles_Vtt,
                 MediaControl.PlayState_Subscribe,
 
                 WebAppLauncher.Launch,

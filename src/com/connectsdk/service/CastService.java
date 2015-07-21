@@ -27,6 +27,7 @@ import android.util.Log;
 
 import com.connectsdk.core.ImageInfo;
 import com.connectsdk.core.MediaInfo;
+import com.connectsdk.core.SubtitleTrack;
 import com.connectsdk.core.Util;
 import com.connectsdk.discovery.DiscoveryFilter;
 import com.connectsdk.discovery.DiscoveryManager;
@@ -74,6 +75,8 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class CastService extends DeviceService implements MediaPlayer, MediaControl, VolumeControl, WebAppLauncher {
+    private static final long MEDIA_TRACK_ID = 1;
+
     interface ConnectionListener {
         void onConnected();
     }
@@ -426,7 +429,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             @Override
             public void onStatusUpdated() {
                 if (subscriptions.size() > 0) {
-                    for (URLServiceSubscription<?> subscription: subscriptions) {
+                    for (URLServiceSubscription<?> subscription : subscriptions) {
                         if (subscription.getTarget().equalsIgnoreCase(PLAY_STATE)) {
                             for (int i = 0; i < subscription.getListeners().size(); i++) {
                                 @SuppressWarnings("unchecked")
@@ -531,7 +534,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         displayImage(mediaUrl, mimeType, title, desc, iconSrc, listener);
     }
 
-    public void playMedia(String url, String subsUrl, String mimeType, String title,
+    private void playMedia(String url, SubtitleTrack subtitleTrack, String mimeType, String title,
                           String description, String iconSrc, boolean shouldLoop,
                           LaunchListener listener) {
         MediaMetadata mMediaMetadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
@@ -545,13 +548,13 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         }
 
         List<MediaTrack> mediaTracks = new ArrayList<>();
-        if(subsUrl != null) {
-            MediaTrack subtitle = new MediaTrack.Builder(1, MediaTrack.TYPE_TEXT)
-                    .setName("Subtitle")
+        if(subtitleTrack != null) {
+            MediaTrack subtitle = new MediaTrack.Builder(MEDIA_TRACK_ID, MediaTrack.TYPE_TEXT)
+                    .setName(subtitleTrack.getLabel())
                     .setSubtype(MediaTrack.SUBTYPE_SUBTITLES)
-                    .setContentId(subsUrl)
-                    .setContentType("text/vtt")
-                    .setLanguage("en")
+                    .setContentId(subtitleTrack.getUrl())
+                    .setContentType(subtitleTrack.getMimeType())
+                    .setLanguage(subtitleTrack.getLanguage())
                     .build();
 
             mediaTracks.add(subtitle);
@@ -579,7 +582,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     @Override
     public void playMedia(MediaInfo mediaInfo, boolean shouldLoop, LaunchListener listener) {
         String mediaUrl = null;
-        String subsUrl = null;
+        SubtitleTrack subtitle = null;
         String mimeType = null;
         String title = null;
         String desc = null;
@@ -587,7 +590,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
         if (mediaInfo != null) {
             mediaUrl = mediaInfo.getUrl();
-            subsUrl = mediaInfo.getSubsUrl();
+            subtitle = mediaInfo.getSubtitle();
             mimeType = mediaInfo.getMimeType();
             title = mediaInfo.getTitle();
             desc = mediaInfo.getDescription();
@@ -598,7 +601,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             }
         }
 
-        playMedia(mediaUrl, subsUrl, mimeType, title, desc, iconSrc, shouldLoop, listener);
+        playMedia(mediaUrl, subtitle, mimeType, title, desc, iconSrc, shouldLoop, listener);
     }
 
     private void playMedia(final com.google.android.gms.cast.MediaInfo mediaInformation, final String mediaAppId, final LaunchListener listener) {
@@ -619,19 +622,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
                                     if (status.isSuccess()) {
                                         webAppSession.launchSession.setSessionType(LaunchSessionType.Media);
-
-                                        // White text, black outline, no background
-                                        TextTrackStyle textTrackStyle = new TextTrackStyle();
-                                        textTrackStyle.setForegroundColor(Color.parseColor("#FFFFFFFF"));
-                                        textTrackStyle.setBackgroundColor(Color.parseColor("#01000000"));
-                                        textTrackStyle.setWindowType(TextTrackStyle.WINDOW_TYPE_NONE);
-                                        textTrackStyle.setEdgeType(TextTrackStyle.EDGE_TYPE_OUTLINE);
-                                        textTrackStyle.setEdgeColor(Color.BLACK);
-                                        textTrackStyle.setFontGenericFamily(TextTrackStyle.FONT_FAMILY_SANS_SERIF);
-
-                                        mMediaPlayer.setTextTrackStyle(mApiClient, textTrackStyle);
-                                        mMediaPlayer.setActiveMediaTracks(mApiClient, new long[]{1});
-
+                                        mMediaPlayer.setActiveMediaTracks(mApiClient, new long[] { MEDIA_TRACK_ID });
                                         Util.postSuccess(listener, new MediaLaunchObject(webAppSession.launchSession, CastService.this));
                                     }
                                     else {
