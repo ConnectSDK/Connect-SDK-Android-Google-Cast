@@ -58,7 +58,7 @@ public class CastServiceChannel implements Cast.MessageReceivedCallback{
 
             @Override
             public void run() {
-                if (mMessage == null) {
+                if (mMessage == null && session.getWebAppSessionListener() != null) {
                     session.getWebAppSessionListener().onReceiveMessage(session, message);
                 } else {
                     session.getWebAppSessionListener().onReceiveMessage(session, mMessage);
