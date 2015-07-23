@@ -1,5 +1,11 @@
 package com.connectsdk.service;
 
+import android.service.carrier.CarrierMessagingService;
+
+import com.connectsdk.core.ImageInfo;
+import com.connectsdk.core.MediaInfo;
+import com.connectsdk.core.SubtitleInfo;
+import com.connectsdk.core.TestUtil;
 import com.connectsdk.service.capability.MediaControl;
 import com.connectsdk.service.capability.MediaControl.DurationListener;
 import com.connectsdk.service.capability.MediaControl.PositionListener;
@@ -10,18 +16,28 @@ import com.connectsdk.service.capability.listeners.ResponseListener;
 import com.connectsdk.service.command.ServiceCommandError;
 import com.connectsdk.service.config.ServiceConfig;
 import com.connectsdk.service.config.ServiceDescription;
+import com.google.android.gms.cast.ApplicationMetadata;
+import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
+import com.google.android.gms.cast.LaunchOptions;
+import com.google.android.gms.cast.MediaMetadata;
 import com.google.android.gms.cast.MediaStatus;
+import com.google.android.gms.cast.MediaTrack;
 import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Result;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 
 import junit.framework.Assert;
 
+import org.apache.maven.artifact.ant.shaded.cli.Arg;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -30,7 +46,6 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Mockito.mock;
@@ -40,10 +55,12 @@ import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(manifest = Config.NONE)
-@PrepareForTest(GoogleApiClient.class)
+@PrepareForTest({GoogleApiClient.class})
 public class CastServiceTest {
 
     CastService service;
+
+    CastService.CastClient castClient = Mockito.mock(CastService.CastClient.class);
 
     GoogleApiClient googleApiClient = PowerMockito.mock(GoogleApiClient.class);
 
@@ -56,6 +73,7 @@ public class CastServiceTest {
         public StubCastService(ServiceDescription serviceDescription,
                                ServiceConfig serviceConfig) {
             super(serviceDescription, serviceConfig);
+            this.mCastClient = castClient;
         }
 
         protected GoogleApiClient createApiClient() {
@@ -103,8 +121,7 @@ public class CastServiceTest {
         service.connect();
         Assert.assertNotNull(service.mApiClient);
 
-        service.connected = true;
-        Mockito.when(googleApiClient.isConnected()).thenReturn(true);
+        setServiceConnected();
 
         service.disconnect();
         Assert.assertNull(service.mApiClient);
@@ -318,7 +335,7 @@ public class CastServiceTest {
                 MediaControl.Seek,
                 MediaControl.Position,
                 MediaControl.PlayState,
-                MediaPlayer.Subtitles_Vtt,
+                MediaPlayer.Subtitle_VTT,
                 MediaControl.PlayState_Subscribe,
 
                 WebAppLauncher.Launch,
@@ -333,5 +350,123 @@ public class CastServiceTest {
         );
         List<String> capabilities = service.getCapabilities();
         Assert.assertEquals(expectedCapabilities, capabilities);
+    }
+
+    @Test
+    public void testPlayMedia() {
+        String mediaUrl = "http://media/";
+        String mediaType = "video/mp4";
+        MediaInfo mediaInfo = new MediaInfo.Builder(mediaUrl, mediaType)
+                .build();
+
+        com.google.android.gms.cast.MediaInfo media = verifyPlayMedia(mediaInfo);
+
+        Assert.assertEquals(mediaUrl, media.getContentId());
+        Assert.assertEquals(mediaType, media.getContentType());
+    }
+
+    @Test
+    public void testPlayMediaWithSubtitles() {
+        String mediaUrl = "http://media/";
+        String mediaType = "video/mp4";
+        String subtitleUrl = "http://subtitle";
+        String subtitleType = "text/vtt";
+        MediaInfo mediaInfo = new MediaInfo.Builder(mediaUrl, mediaType)
+                .setSubtitle(new SubtitleInfo.Builder(subtitleUrl, subtitleType).build())
+                .build();
+
+        com.google.android.gms.cast.MediaInfo media = verifyPlayMedia(mediaInfo);
+        MediaTrack track = media.getMediaTracks().get(0);
+
+        Assert.assertEquals(mediaUrl, media.getContentId());
+        Assert.assertEquals(mediaType, media.getContentType());
+        Assert.assertEquals(subtitleUrl, track.getContentId());
+        Assert.assertEquals(subtitleType, track.getContentType());
+    }
+
+    @Test
+    public void testPlayMediaWithAllParameters() {
+        String mediaUrl = "http://media/";
+        String mediaType = "video/mp4";
+        String subtitleUrl = "http://subtitle";
+        String subtitleType = "text/vtt";
+        String title = "title";
+        String description = "description";
+        String icon = "icon";
+        String subtitleLang = "en";
+        String subtitleName = "English";
+        MediaInfo mediaInfo = new MediaInfo.Builder(mediaUrl, mediaType)
+                .setTitle(title)
+                .setDescription(description)
+                .setIcon(icon)
+                .setSubtitle(new SubtitleInfo.Builder(subtitleUrl, subtitleType)
+                        .setLanguage(subtitleLang)
+                        .setLabel(subtitleName)
+                        .build())
+                .build();
+
+        com.google.android.gms.cast.MediaInfo media = verifyPlayMedia(mediaInfo);
+        MediaTrack track = media.getMediaTracks().get(0);
+        MediaMetadata metadata = media.getMetadata();
+
+        Assert.assertEquals(mediaUrl, media.getContentId());
+        Assert.assertEquals(mediaType, media.getContentType());
+        Assert.assertEquals(title, metadata.getString(MediaMetadata.KEY_TITLE));
+        Assert.assertEquals(description, metadata.getString(MediaMetadata.KEY_SUBTITLE));
+        Assert.assertEquals(icon, metadata.getImages().get(0).getUrl().toString());
+        Assert.assertEquals(subtitleUrl, track.getContentId());
+        Assert.assertEquals(subtitleType, track.getContentType());
+        Assert.assertEquals(subtitleLang, track.getLanguage());
+        Assert.assertEquals(subtitleName, track.getName());
+        Assert.assertEquals(MediaTrack.TYPE_TEXT, track.getType());
+        Assert.assertEquals(MediaTrack.SUBTYPE_SUBTITLES, track.getSubtype());
+    }
+
+    private com.google.android.gms.cast.MediaInfo verifyPlayMedia(MediaInfo mediaInfo) {
+        setServiceConnected();
+        MediaPlayer.LaunchListener listener = Mockito.mock(MediaPlayer.LaunchListener.class);
+        PendingResult<Cast.ApplicationConnectionResult> pendingResult
+                = Mockito.mock(PendingResult.class);
+        Mockito.when(castClient.launchApplication(Mockito.any(GoogleApiClient.class),
+                        Mockito.anyString(), Mockito.any(LaunchOptions.class)))
+                .thenReturn(pendingResult);
+
+
+        // playMedia
+        service.playMedia(mediaInfo, false, listener);
+        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+
+        // CastApi.launchApplication
+        Mockito.verify(castClient).launchApplication(Mockito.same(googleApiClient), Mockito.anyString(), Mockito.any(LaunchOptions.class));
+
+        // ResultCallback.setResultCallback
+        ArgumentCaptor<ResultCallback> argResultCallback =
+                ArgumentCaptor.forClass(ResultCallback.class);
+        Mockito.verify(pendingResult).setResultCallback(argResultCallback.capture());
+
+        // ApplicationConnectionResultCallback.onResult
+        ResultCallback resultCallback = argResultCallback.getValue();
+        Cast.ApplicationConnectionResult result = Mockito.mock(Cast.ApplicationConnectionResult.class);
+        Status status = Mockito.mock(Status.class);
+        Mockito.when(status.isSuccess()).thenReturn(Boolean.TRUE);
+        Mockito.when(result.getStatus()).thenReturn(status);
+        ApplicationMetadata applicationMetadata = Mockito.mock(ApplicationMetadata.class);
+        Mockito.when(result.getApplicationMetadata()).thenReturn(applicationMetadata);
+        resultCallback.onResult(result);
+        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+
+        // loadMedia
+        ArgumentCaptor<com.google.android.gms.cast.MediaInfo> argMedia =
+                ArgumentCaptor.forClass(com.google.android.gms.cast.MediaInfo.class);
+        Mockito.verify(mediaPlayer).load(Mockito.same(googleApiClient), argMedia.capture(), Mockito.eq(true));
+        return argMedia.getValue();
+    }
+
+
+    private void setServiceConnected() {
+        service.connect();
+        service.connected = true;
+        Mockito.when(googleApiClient.isConnected()).thenReturn(true);
+        service.mMediaPlayer = mediaPlayer;
     }
 }
