@@ -372,7 +372,7 @@ public class CastServiceTest {
         String subtitleUrl = "http://subtitle";
         String subtitleType = "text/vtt";
         MediaInfo mediaInfo = new MediaInfo.Builder(mediaUrl, mediaType)
-                .setSubtitle(new SubtitleInfo.Builder(subtitleUrl, subtitleType).build())
+                .setSubtitle(new SubtitleInfo.Builder(subtitleUrl).build())
                 .build();
 
         com.google.android.gms.cast.MediaInfo media = verifyPlayMedia(mediaInfo);
@@ -381,7 +381,7 @@ public class CastServiceTest {
         Assert.assertEquals(mediaUrl, media.getContentId());
         Assert.assertEquals(mediaType, media.getContentType());
         Assert.assertEquals(subtitleUrl, track.getContentId());
-        Assert.assertEquals(subtitleType, track.getContentType());
+        Assert.assertNull(track.getContentType());
     }
 
     @Test
@@ -399,7 +399,8 @@ public class CastServiceTest {
                 .setTitle(title)
                 .setDescription(description)
                 .setIcon(icon)
-                .setSubtitle(new SubtitleInfo.Builder(subtitleUrl, subtitleType)
+                .setSubtitle(new SubtitleInfo.Builder(subtitleUrl)
+                        .setMimeType(subtitleType)
                         .setLanguage(subtitleLang)
                         .setLabel(subtitleName)
                         .build())
