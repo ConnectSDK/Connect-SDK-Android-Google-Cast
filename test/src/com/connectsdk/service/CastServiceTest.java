@@ -1,21 +1,5 @@
 package com.connectsdk.service;
 
-import android.service.carrier.CarrierMessagingService;
-
-import com.connectsdk.core.ImageInfo;
-import com.connectsdk.core.MediaInfo;
-import com.connectsdk.core.SubtitleInfo;
-import com.connectsdk.core.TestUtil;
-import com.connectsdk.service.capability.MediaControl;
-import com.connectsdk.service.capability.MediaControl.DurationListener;
-import com.connectsdk.service.capability.MediaControl.PositionListener;
-import com.connectsdk.service.capability.MediaPlayer;
-import com.connectsdk.service.capability.VolumeControl;
-import com.connectsdk.service.capability.WebAppLauncher;
-import com.connectsdk.service.capability.listeners.ResponseListener;
-import com.connectsdk.service.command.ServiceCommandError;
-import com.connectsdk.service.config.ServiceConfig;
-import com.connectsdk.service.config.ServiceDescription;
 import com.google.android.gms.cast.ApplicationMetadata;
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
@@ -26,18 +10,28 @@ import com.google.android.gms.cast.MediaTrack;
 import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 
+import com.connectsdk.core.MediaInfo;
+import com.connectsdk.core.SubtitleInfo;
+import com.connectsdk.service.capability.MediaControl;
+import com.connectsdk.service.capability.MediaControl.DurationListener;
+import com.connectsdk.service.capability.MediaControl.PositionListener;
+import com.connectsdk.service.capability.MediaPlayer;
+import com.connectsdk.service.capability.VolumeControl;
+import com.connectsdk.service.capability.WebAppLauncher;
+import com.connectsdk.service.capability.listeners.ResponseListener;
+import com.connectsdk.service.command.ServiceCommandError;
+import com.connectsdk.service.config.ServiceConfig;
+import com.connectsdk.service.config.ServiceDescription;
+
 import junit.framework.Assert;
 
-import org.apache.maven.artifact.ant.shaded.cli.Arg;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -46,7 +40,9 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -307,8 +303,8 @@ public class CastServiceTest {
     }
 
     @Test
-    public void testCapabilities() {
-        List<String> expectedCapabilities = Arrays.asList(
+    public void testGetCapabilities() {
+        Set<String> expectedCapabilities = new HashSet<String>(Arrays.asList(
                 MediaPlayer.Display_Image,
                 MediaPlayer.Play_Video,
                 MediaPlayer.Play_Audio,
@@ -347,8 +343,8 @@ public class CastServiceTest {
                 WebAppLauncher.Disconnect,
                 WebAppLauncher.Join,
                 WebAppLauncher.Close
-        );
-        List<String> capabilities = service.getCapabilities();
+        ));
+        Set<String> capabilities = new HashSet<String>(service.getCapabilities());
         Assert.assertEquals(expectedCapabilities, capabilities);
     }
 
@@ -370,9 +366,9 @@ public class CastServiceTest {
         String mediaUrl = "http://media/";
         String mediaType = "video/mp4";
         String subtitleUrl = "http://subtitle";
-        String subtitleType = "text/vtt";
+
         MediaInfo mediaInfo = new MediaInfo.Builder(mediaUrl, mediaType)
-                .setSubtitle(new SubtitleInfo.Builder(subtitleUrl).build())
+                .setSubtitleInfo(new SubtitleInfo.Builder(subtitleUrl).build())
                 .build();
 
         com.google.android.gms.cast.MediaInfo media = verifyPlayMedia(mediaInfo);
@@ -399,7 +395,7 @@ public class CastServiceTest {
                 .setTitle(title)
                 .setDescription(description)
                 .setIcon(icon)
-                .setSubtitle(new SubtitleInfo.Builder(subtitleUrl)
+                .setSubtitleInfo(new SubtitleInfo.Builder(subtitleUrl)
                         .setMimeType(subtitleType)
                         .setLanguage(subtitleLang)
                         .setLabel(subtitleName)

@@ -57,7 +57,6 @@ import com.google.android.gms.cast.MediaTrack;
 import com.google.android.gms.cast.RemoteMediaPlayer;
 import com.google.android.gms.cast.RemoteMediaPlayer.MediaChannelResult;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.AbstractPendingResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
@@ -660,7 +659,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
         if (mediaInfo != null) {
             mediaUrl = mediaInfo.getUrl();
-            subtitle = mediaInfo.getSubtitle();
+            subtitle = mediaInfo.getSubtitleInfo();
             mimeType = mediaInfo.getMimeType();
             title = mediaInfo.getTitle();
             desc = mediaInfo.getDescription();
@@ -1190,6 +1189,9 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         List<String> capabilities = new ArrayList<String>();
 
         Collections.addAll(capabilities, MediaPlayer.Capabilities);
+        capabilities.add(Subtitle_VTT);
+
+
         Collections.addAll(capabilities, VolumeControl.Capabilities);
 
         capabilities.add(Play);
@@ -1199,7 +1201,6 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         capabilities.add(Seek);
         capabilities.add(Position);
         capabilities.add(PlayState);
-        capabilities.add(Subtitle_VTT);
         capabilities.add(PlayState_Subscribe);
 
         capabilities.add(WebAppLauncher.Launch);
