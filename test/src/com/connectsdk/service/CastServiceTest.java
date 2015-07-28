@@ -41,7 +41,6 @@ import org.robolectric.annotation.Config;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static org.mockito.Mockito.mock;
@@ -331,7 +330,7 @@ public class CastServiceTest {
                 MediaControl.Seek,
                 MediaControl.Position,
                 MediaControl.PlayState,
-                MediaPlayer.Subtitle_VTT,
+                MediaPlayer.Subtitle_WebVTT,
                 MediaControl.PlayState_Subscribe,
 
                 WebAppLauncher.Launch,

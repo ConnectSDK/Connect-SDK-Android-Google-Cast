@@ -1189,7 +1189,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         List<String> capabilities = new ArrayList<String>();
 
         Collections.addAll(capabilities, MediaPlayer.Capabilities);
-        capabilities.add(Subtitle_VTT);
+        capabilities.add(Subtitle_WebVTT);
 
 
         Collections.addAll(capabilities, VolumeControl.Capabilities);
