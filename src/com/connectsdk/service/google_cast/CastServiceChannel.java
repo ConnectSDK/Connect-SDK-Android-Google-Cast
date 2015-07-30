@@ -20,12 +20,14 @@
 
 package com.connectsdk.service.google_cast;
 
-import com.amazon.whisperlink.annotation.NotNull;
+import android.support.annotation.NonNull;
+
+import com.google.android.gms.cast.Cast;
+import com.google.android.gms.cast.CastDevice;
+
 import com.connectsdk.core.Util;
 import com.connectsdk.service.sessions.CastWebAppSession;
 import com.connectsdk.service.sessions.WebAppSessionListener;
-import com.google.android.gms.cast.Cast;
-import com.google.android.gms.cast.CastDevice;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,7 +36,7 @@ public class CastServiceChannel implements Cast.MessageReceivedCallback{
     final String webAppId;
     final CastWebAppSession session;
 
-    public CastServiceChannel(String webAppId, @NotNull CastWebAppSession session) {
+    public CastServiceChannel(String webAppId, @NonNull CastWebAppSession session) {
         this.webAppId = webAppId;
         this.session = session;
     }
@@ -56,7 +58,7 @@ public class CastServiceChannel implements Cast.MessageReceivedCallback{
             messageJSON = new JSONObject(message);
         } catch (JSONException e) {
             e.printStackTrace();
-        } catch (RuntimeException e) {
+        } catch (NullPointerException e) {
             e.printStackTrace();
         }
 
