@@ -235,7 +235,8 @@ public class CastServiceTest {
         service.seek(position, listener);
 
         // then
-        verify(mediaPlayer).seek(googleApiClient, position, RemoteMediaPlayer.RESUME_STATE_UNCHANGED);
+        verify(mediaPlayer).seek(googleApiClient, position, RemoteMediaPlayer
+                .RESUME_STATE_UNCHANGED);
     }
 
 
@@ -416,6 +417,25 @@ public class CastServiceTest {
         Assert.assertEquals(subtitleName, track.getName());
         Assert.assertEquals(MediaTrack.TYPE_TEXT, track.getType());
         Assert.assertEquals(MediaTrack.SUBTYPE_SUBTITLES, track.getSubtype());
+    }
+
+    @Test
+    public void testPlayMediaShouldNotCrashWhenCastThrowsIllegalStateException() {
+        verifyPlayMediaWhenCastThrowsException(IllegalStateException.class);
+    }
+
+    @Test
+    public void testPlayMediaShouldNotCrashWhenCastThrowsNullPointerException() {
+        verifyPlayMediaWhenCastThrowsException(NullPointerException.class);
+    }
+
+    private void verifyPlayMediaWhenCastThrowsException(Class<? extends Throwable> exception) {
+        MediaInfo mediaInfo = new MediaInfo.Builder("http://host.com/", "video/mp4").build();
+        MediaPlayer.LaunchListener listener = Mockito.mock(MediaPlayer.LaunchListener.class);
+        Mockito.when(castClient.getApplicationStatus(Mockito.any(GoogleApiClient.class)))
+                .thenThrow(exception);
+
+        service.playMedia(mediaInfo, true, listener);
     }
 
     private com.google.android.gms.cast.MediaInfo verifyPlayMedia(MediaInfo mediaInfo) {

@@ -115,6 +115,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         }
 
         public Object getApplicationStatus(GoogleApiClient mApiClient) {
+
             return Cast.CastApi.getApplicationStatus(mApiClient);
         }
 
@@ -649,7 +650,13 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
 
     @Override
     public void playMedia(MediaInfo mediaInfo, boolean shouldLoop, LaunchListener listener) {
-        mCastClient.getApplicationStatus(mApiClient);
+        try {
+            mCastClient.getApplicationStatus(mApiClient);
+        } catch (IllegalStateException e) {
+            Util.postError(listener, new ServiceCommandError(e.getMessage()));
+        } catch (NullPointerException e) {
+            Util.postError(listener, new ServiceCommandError(e.getMessage()));
+        }
         String mediaUrl = null;
         SubtitleInfo subtitle = null;
         String mimeType = null;
