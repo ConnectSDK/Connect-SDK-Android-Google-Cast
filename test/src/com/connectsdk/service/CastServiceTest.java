@@ -98,15 +98,28 @@ public class CastServiceTest {
     }
 
     @Test
-    public void testConnectOnlyOnce() {
-        // Test desc.: if service is already connected it shouldn't invoke connect
-
-        Assert.assertNull(service.mApiClient);
-        service.connect();
-        Assert.assertNotNull(service.mApiClient);
+    public void testConnectShouldBeInvokedIfNotConnecting() {
+        Mockito.when(googleApiClient.isConnecting()).thenReturn(Boolean.FALSE);
+        Mockito.when(googleApiClient.isConnected()).thenReturn(Boolean.FALSE);
         service.connect();
 
         verify(googleApiClient, Mockito.times(1)).connect();
+    }
+
+    @Test
+    public void testConnectShouldNotBeInvokedIfConnected() {
+        Mockito.when(googleApiClient.isConnected()).thenReturn(Boolean.TRUE);
+        service.connect();
+
+        verify(googleApiClient, Mockito.times(0)).connect();
+    }
+
+    @Test
+    public void testConnectShouldNotBeInvokedIfConnecting() {
+        Mockito.when(googleApiClient.isConnecting()).thenReturn(Boolean.TRUE);
+        service.connect();
+
+        verify(googleApiClient, Mockito.times(0)).connect();
     }
 
     @Test
@@ -349,7 +362,7 @@ public class CastServiceTest {
     }
 
     @Test
-    public void testPlayMedia() {
+    public void testPlayMedia() throws CastService.CastClientException {
         String mediaUrl = "http://media/";
         String mediaType = "video/mp4";
         MediaInfo mediaInfo = new MediaInfo.Builder(mediaUrl, mediaType)
@@ -362,7 +375,7 @@ public class CastServiceTest {
     }
 
     @Test
-    public void testPlayMediaWithSubtitles() {
+    public void testPlayMediaWithSubtitles() throws CastService.CastClientException {
         String mediaUrl = "http://media/";
         String mediaType = "video/mp4";
         String subtitleUrl = "http://subtitle";
@@ -381,7 +394,7 @@ public class CastServiceTest {
     }
 
     @Test
-    public void testPlayMediaWithAllParameters() {
+    public void testPlayMediaWithAllParameters() throws CastService.CastClientException {
         String mediaUrl = "http://media/";
         String mediaType = "video/mp4";
         String subtitleUrl = "http://subtitle";
@@ -420,16 +433,11 @@ public class CastServiceTest {
     }
 
     @Test
-    public void testPlayMediaShouldNotCrashWhenCastThrowsIllegalStateException() {
-        verifyPlayMediaWhenCastThrowsException(IllegalStateException.class);
+    public void testPlayMediaShouldNotCrashWhenCastThrowsException() throws CastService.CastClientException {
+        verifyPlayMediaWhenCastThrowsException(CastService.CastClientException.class);
     }
 
-    @Test
-    public void testPlayMediaShouldNotCrashWhenCastThrowsNullPointerException() {
-        verifyPlayMediaWhenCastThrowsException(NullPointerException.class);
-    }
-
-    private void verifyPlayMediaWhenCastThrowsException(Class<? extends Throwable> exception) {
+    private void verifyPlayMediaWhenCastThrowsException(Class<? extends Throwable> exception) throws CastService.CastClientException {
         MediaInfo mediaInfo = new MediaInfo.Builder("http://host.com/", "video/mp4").build();
         MediaPlayer.LaunchListener listener = Mockito.mock(MediaPlayer.LaunchListener.class);
         Mockito.when(castClient.getApplicationStatus(Mockito.any(GoogleApiClient.class)))
@@ -438,7 +446,7 @@ public class CastServiceTest {
         service.playMedia(mediaInfo, true, listener);
     }
 
-    private com.google.android.gms.cast.MediaInfo verifyPlayMedia(MediaInfo mediaInfo) {
+    private com.google.android.gms.cast.MediaInfo verifyPlayMedia(MediaInfo mediaInfo) throws CastService.CastClientException {
         setServiceConnected();
         MediaPlayer.LaunchListener listener = Mockito.mock(MediaPlayer.LaunchListener.class);
         PendingResult<Cast.ApplicationConnectionResult> pendingResult
