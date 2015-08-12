@@ -109,8 +109,12 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
      */
     static class CastClient {
 
-        public void leaveApplication(GoogleApiClient mApiClient) {
-            Cast.CastApi.leaveApplication(mApiClient);
+        public void leaveApplication(GoogleApiClient mApiClient) throws CastClientException {
+            try {
+                Cast.CastApi.leaveApplication(mApiClient);
+            } catch (RuntimeException e) {
+                throw createCastClientException(e);
+            }
         }
 
         public void setMessageReceivedCallbacks(
@@ -351,7 +355,11 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             commandQueue.clear();
         }
         if (mApiClient != null && mApiClient.isConnected()) {
-            mCastClient.leaveApplication(mApiClient);
+            try {
+                mCastClient.leaveApplication(mApiClient);
+            } catch (CastClientException e) {
+                Log.e(Util.T, "Closing application error", e);
+            }
             mApiClient.disconnect();
         }
         if (connected) {
