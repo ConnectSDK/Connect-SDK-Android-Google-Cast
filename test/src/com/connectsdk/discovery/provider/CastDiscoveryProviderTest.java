@@ -12,6 +12,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
 import android.content.Context;
@@ -52,7 +53,7 @@ public class CastDiscoveryProviderTest {
 
     @Before
     public void setUp() {
-        dp = new StubCastDiscoveryProvider(Robolectric.application);
+        dp = new StubCastDiscoveryProvider(RuntimeEnvironment.application);
         assertNotNull(dp);
     }
 
@@ -66,7 +67,8 @@ public class CastDiscoveryProviderTest {
 
         // waiting for timer call
         Thread.sleep(200);
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        Robolectric.flushForegroundThreadScheduler();;
+        Robolectric.flushForegroundThreadScheduler();
 
         // then
         verify(mediaRouter).addCallback(any(MediaRouteSelector.class),
@@ -79,7 +81,7 @@ public class CastDiscoveryProviderTest {
 
         // when
         dp.stop();
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        Robolectric.flushForegroundThreadScheduler();;
 
         // then
         verify(mediaRouter).removeCallback(any(MediaRouter.Callback.class));
@@ -95,7 +97,7 @@ public class CastDiscoveryProviderTest {
 
         // when
         dp.reset();
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        Robolectric.flushForegroundThreadScheduler();;
 
         // then
         verify(mediaRouter).removeCallback(any(MediaRouter.Callback.class));

@@ -58,7 +58,7 @@ public class CastServiceChannelTest {
         WebAppSessionListener listener = Mockito.mock(WebAppSessionListener.class);
         Mockito.when(session.getWebAppSessionListener()).thenReturn(listener);
         channel.onMessageReceived(null, null, null);
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        Robolectric.flushForegroundThreadScheduler();;
 
         Mockito.verify(listener).onReceiveMessage(session, null);
     }
@@ -69,7 +69,7 @@ public class CastServiceChannelTest {
         WebAppSessionListener listener = Mockito.mock(WebAppSessionListener.class);
         Mockito.when(session.getWebAppSessionListener()).thenReturn(listener);
         channel.onMessageReceived(null, null, content);
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        Robolectric.flushForegroundThreadScheduler();;
 
         ArgumentCaptor<Object> argMessage = ArgumentCaptor.forClass(Object.class);
         Mockito.verify(listener).onReceiveMessage(Mockito.same(session), argMessage.capture());
@@ -82,7 +82,7 @@ public class CastServiceChannelTest {
         WebAppSessionListener listener = Mockito.mock(WebAppSessionListener.class);
         Mockito.when(session.getWebAppSessionListener()).thenReturn(listener);
         channel.onMessageReceived(null, null, content);
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        Robolectric.flushForegroundThreadScheduler();;
 
         ArgumentCaptor<Object> argMessage = ArgumentCaptor.forClass(Object.class);
         Mockito.verify(listener).onReceiveMessage(Mockito.same(session), argMessage.capture());
@@ -95,11 +95,11 @@ public class CastServiceChannelTest {
         WebAppSessionListener listener = Mockito.mock(WebAppSessionListener.class);
         Mockito.when(session.getWebAppSessionListener()).thenReturn(listener);
         try {
-            Robolectric.getUiThreadScheduler().pause();
+            Robolectric.getForegroundThreadScheduler().pause();
             channel.onMessageReceived(null, null, null);
             // modify session for checking pending UI task
             Mockito.when(session.getWebAppSessionListener()).thenReturn(null);
-            Robolectric.runUiThreadTasksIncludingDelayedTasks();
+            Robolectric.flushForegroundThreadScheduler();;
         } catch (RuntimeException e) {
             Assert.fail("onMessageReceived should not thrown an Exception");
         }
