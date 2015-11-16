@@ -1,30 +1,33 @@
 package com.connectsdk.discovery.provider;
 
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.*;
+import android.content.Context;
+import android.support.v7.media.MediaRouteSelector;
+import android.support.v7.media.MediaRouter;
+
+import com.connectsdk.BuildConfig;
+import com.connectsdk.discovery.DiscoveryProviderListener;
+import com.connectsdk.service.config.ServiceDescription;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
-import android.content.Context;
-import android.support.v7.media.MediaRouteSelector;
-import android.support.v7.media.MediaRouter;
-
-import com.connectsdk.discovery.DiscoveryProviderListener;
-import com.connectsdk.discovery.provider.CastDiscoveryProvider;
-import com.connectsdk.service.config.ServiceDescription;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 
-@RunWith(RobolectricTestRunner.class)
-@Config(manifest = Config.NONE)
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class, sdk = 21)
 @PrepareForTest({MediaRouter.class})
 public class CastDiscoveryProviderTest {
 
@@ -52,7 +55,7 @@ public class CastDiscoveryProviderTest {
 
     @Before
     public void setUp() {
-        dp = new StubCastDiscoveryProvider(Robolectric.application);
+        dp = new StubCastDiscoveryProvider(RuntimeEnvironment.application);
         assertNotNull(dp);
     }
 
@@ -66,7 +69,7 @@ public class CastDiscoveryProviderTest {
 
         // waiting for timer call
         Thread.sleep(200);
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks();
 
         // then
         verify(mediaRouter).addCallback(any(MediaRouteSelector.class),
@@ -79,7 +82,7 @@ public class CastDiscoveryProviderTest {
 
         // when
         dp.stop();
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks();
 
         // then
         verify(mediaRouter).removeCallback(any(MediaRouter.Callback.class));
@@ -95,7 +98,7 @@ public class CastDiscoveryProviderTest {
 
         // when
         dp.reset();
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks();
 
         // then
         verify(mediaRouter).removeCallback(any(MediaRouter.Callback.class));
