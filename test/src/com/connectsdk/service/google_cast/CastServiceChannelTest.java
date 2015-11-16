@@ -19,6 +19,7 @@
  */
 package com.connectsdk.service.google_cast;
 
+import com.connectsdk.BuildConfig;
 import com.connectsdk.service.sessions.CastWebAppSession;
 import com.connectsdk.service.sessions.WebAppSessionListener;
 
@@ -31,12 +32,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
+import org.robolectric.shadows.ShadowLooper;
 
-@RunWith(RobolectricTestRunner.class)
-@Config(manifest=Config.NONE)
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class, sdk = 21)
+@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*" })
 public class CastServiceChannelTest {
 
     private CastServiceChannel channel;
@@ -58,7 +62,7 @@ public class CastServiceChannelTest {
         WebAppSessionListener listener = Mockito.mock(WebAppSessionListener.class);
         Mockito.when(session.getWebAppSessionListener()).thenReturn(listener);
         channel.onMessageReceived(null, null, null);
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks();
 
         Mockito.verify(listener).onReceiveMessage(session, null);
     }
@@ -69,7 +73,7 @@ public class CastServiceChannelTest {
         WebAppSessionListener listener = Mockito.mock(WebAppSessionListener.class);
         Mockito.when(session.getWebAppSessionListener()).thenReturn(listener);
         channel.onMessageReceived(null, null, content);
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks();
 
         ArgumentCaptor<Object> argMessage = ArgumentCaptor.forClass(Object.class);
         Mockito.verify(listener).onReceiveMessage(Mockito.same(session), argMessage.capture());
@@ -82,7 +86,7 @@ public class CastServiceChannelTest {
         WebAppSessionListener listener = Mockito.mock(WebAppSessionListener.class);
         Mockito.when(session.getWebAppSessionListener()).thenReturn(listener);
         channel.onMessageReceived(null, null, content);
-        Robolectric.runUiThreadTasksIncludingDelayedTasks();
+        ShadowLooper.runUiThreadTasksIncludingDelayedTasks();
 
         ArgumentCaptor<Object> argMessage = ArgumentCaptor.forClass(Object.class);
         Mockito.verify(listener).onReceiveMessage(Mockito.same(session), argMessage.capture());
@@ -95,11 +99,11 @@ public class CastServiceChannelTest {
         WebAppSessionListener listener = Mockito.mock(WebAppSessionListener.class);
         Mockito.when(session.getWebAppSessionListener()).thenReturn(listener);
         try {
-            Robolectric.getUiThreadScheduler().pause();
+            Robolectric.getForegroundThreadScheduler().pause();
             channel.onMessageReceived(null, null, null);
             // modify session for checking pending UI task
             Mockito.when(session.getWebAppSessionListener()).thenReturn(null);
-            Robolectric.runUiThreadTasksIncludingDelayedTasks();
+            ShadowLooper.runUiThreadTasksIncludingDelayedTasks();
         } catch (RuntimeException e) {
             Assert.fail("onMessageReceived should not thrown an Exception");
         }
