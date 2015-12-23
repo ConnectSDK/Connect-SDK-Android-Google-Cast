@@ -288,6 +288,11 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     }
 
     @Override
+    public String getWebAppId() {
+        return applicationID;
+    }
+
+    @Override
     public String getServiceName() {
         return ID;
     }
@@ -688,8 +693,7 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
     }
 
     private void playMedia(String url, SubtitleInfo subtitleInfo, String mimeType, String title,
-                          String description, String iconSrc, boolean shouldLoop,
-                          LaunchListener listener) {
+                          String description, String iconSrc, boolean shouldLoop, long startPosition, JSONObject customData, LaunchListener listener) {
         MediaMetadata mMediaMetadata = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
         mMediaMetadata.putString(MediaMetadata.KEY_TITLE, title);
         mMediaMetadata.putString(MediaMetadata.KEY_SUBTITLE, description);
@@ -722,18 +726,29 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
                 .setMediaTracks(mediaTracks)
                 .build();
 
-        playMedia(mediaInformation, applicationID, listener);
+        //playMedia(mediaInformation, applicationID, listener);
+        playMedia(mediaInformation, applicationID, startPosition, customData, listener);
     }
 
     @Override
     public void playMedia(String url, String mimeType, String title,
                           String description, String iconSrc, boolean shouldLoop,
                           LaunchListener listener) {
-        playMedia(url, null, mimeType, title, description, iconSrc, shouldLoop, listener);
+        playMedia(url, null, mimeType, title, description, iconSrc, shouldLoop, 0, null, listener);
     }
 
     @Override
     public void playMedia(MediaInfo mediaInfo, boolean shouldLoop, LaunchListener listener) {
+        playMedia(mediaInfo, shouldLoop, 0,listener);
+    }
+
+    @Override
+    public void playMedia(MediaInfo mediaInfo, boolean shouldLoop, long startPosition, LaunchListener listener) {
+        playMedia(mediaInfo, shouldLoop, startPosition, null, listener);
+    }
+
+    @Override
+    public void playMedia(final MediaInfo mediaInfo, final boolean shouldLoop, long startPosition, Object customData, final LaunchListener listener) {
         try {
             mCastClient.getApplicationStatus(mApiClient);
         } catch (CastClientException e) {
@@ -759,31 +774,40 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
             }
         }
 
-        playMedia(mediaUrl, subtitle, mimeType, title, desc, iconSrc, shouldLoop, listener);
+        if(customData instanceof JSONObject) {
+            playMedia(mediaUrl, subtitle, mimeType, title, desc, iconSrc, shouldLoop, startPosition, (JSONObject)customData, listener);
+        }else{
+            playMedia(mediaUrl, subtitle, mimeType, title, desc, iconSrc, shouldLoop, startPosition, null, listener);
+        }
+
     }
 
     private void playMedia(final com.google.android.gms.cast.MediaInfo mediaInformation, final String mediaAppId, final LaunchListener listener) {
+        playMedia(mediaInformation, mediaAppId, 0, null, listener);
+    }
+
+    private void playMedia(final com.google.android.gms.cast.MediaInfo mediaInformation, final String mediaAppId, final long startPosition, final JSONObject customData, final LaunchListener listener) {
         final ApplicationConnectionResultCallback webAppLaunchCallback =
                 new ApplicationConnectionResultCallback(new LaunchWebAppListener() {
 
-            @Override
-            public void onSuccess(final WebAppSession webAppSession) {
-                ConnectionListener connectionListener = new ConnectionListener() {
+                    @Override
+                    public void onSuccess(final WebAppSession webAppSession) {
+                        ConnectionListener connectionListener = new ConnectionListener() {
+
+                            @Override
+                            public void onConnected() {
+                                loadMedia(mediaInformation, startPosition, customData, webAppSession, listener);
+                            }
+                        };
+
+                        runCommand(connectionListener);
+                    }
 
                     @Override
-                    public void onConnected() {
-                        loadMedia(mediaInformation, webAppSession, listener);
+                    public void onFailure(ServiceCommandError error) {
+                        Util.postError(listener, error);
                     }
-                };
-
-                runCommand(connectionListener);
-            }
-
-            @Override
-            public void onFailure(ServiceCommandError error) {
-                Util.postError(listener, error);
-            }
-        });
+                });
 
         launchingAppId = mediaAppId;
 
@@ -810,10 +834,13 @@ public class CastService extends DeviceService implements MediaPlayer, MediaCont
         runCommand(connectionListener);
     }
 
-    private void loadMedia(com.google.android.gms.cast.MediaInfo mediaInformation,
-                           final WebAppSession webAppSession, final LaunchListener listener) {
+    private void loadMedia(com.google.android.gms.cast.MediaInfo mediaInformation, final WebAppSession webAppSession, final LaunchListener listener) {
+        loadMedia(mediaInformation, 0, null, webAppSession, listener);
+    }
+
+    private void loadMedia(com.google.android.gms.cast.MediaInfo mediaInformation, long startPosition, JSONObject customData, final WebAppSession webAppSession, final LaunchListener listener) {
         try {
-            mMediaPlayer.load(mApiClient, mediaInformation, true).setResultCallback(new ResultCallback<MediaChannelResult>() {
+            mMediaPlayer.load(mApiClient, mediaInformation, true, startPosition, customData).setResultCallback(new ResultCallback<MediaChannelResult>() {
 
                 @Override
                 public void onResult(MediaChannelResult result) {

@@ -207,8 +207,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             foundServices.put(uuid, foundService);
 
             if (listUpdateFlag) {
-                for (DiscoveryProviderListener listenter: serviceListeners) {
-                    listenter.onServiceAdded(CastDiscoveryProvider.this, foundService);
+                for (DiscoveryProviderListener listener: serviceListeners) {
+                    listener.onServiceAdded(CastDiscoveryProvider.this, foundService);
                 }
             }
         }
@@ -243,8 +243,8 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
                 foundServices.put(uuid, foundService);
 
                 if (listUpdateFlag) {
-                    for (DiscoveryProviderListener listenter: serviceListeners) {
-                        listenter.onServiceAdded(CastDiscoveryProvider.this, foundService);
+                    for (DiscoveryProviderListener listener: serviceListeners) {
+                        listener.onServiceAdded(CastDiscoveryProvider.this, foundService);
                     }
                 }
             }
