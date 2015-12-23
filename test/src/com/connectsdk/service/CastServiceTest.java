@@ -28,6 +28,7 @@ import com.google.android.gms.common.api.Status;
 
 import junit.framework.Assert;
 
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -493,7 +494,7 @@ public class CastServiceTest {
         // loadMedia
         ArgumentCaptor<com.google.android.gms.cast.MediaInfo> argMedia =
                 ArgumentCaptor.forClass(com.google.android.gms.cast.MediaInfo.class);
-        Mockito.verify(mediaPlayer).load(Mockito.same(googleApiClient), argMedia.capture(), Mockito.eq(true));
+        Mockito.verify(mediaPlayer).load(Mockito.same(googleApiClient), argMedia.capture(), Mockito.eq(true), Mockito.eq((long) 0), Mockito.eq((JSONObject) null));
         return argMedia.getValue();
     }
 
