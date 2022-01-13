@@ -226,7 +226,7 @@ public class CastDiscoveryProvider implements DiscoveryProvider {
             boolean listUpdateFlag = false;
 
             if (!isNew) {
-                foundService.setIpAddress(castDevice.getIpAddress().getHostAddress());
+                foundService.setIpAddress(castDevice.getInetAddress().getHostAddress());
                 foundService.setModelName(castDevice.getModelName());
                 foundService.setModelNumber(castDevice.getDeviceVersion());
                 foundService.setModelDescription(route.getDescription());
