@@ -20,7 +20,7 @@
 
 package com.connectsdk.service.google_cast;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.google.android.gms.cast.Cast;
 import com.google.android.gms.cast.CastDevice;
